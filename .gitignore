@@ -153,5 +153,7 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-/PCAWGData/*
-/PCAWGData
+/PCAWGData/*.gz
+/PCAWGData/*.maf
+/PCAWGData/metadata/*
+/PCAWGData/Cancers/*
