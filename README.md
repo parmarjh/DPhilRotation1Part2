@@ -19,8 +19,9 @@ bash ./SplitPCAWGData.sh
        - Type2
        - TypeN
        
-## Parsing data into individual patient maf files for each Cancer type and converts to vcf file.
+## Parsing data into individual patient maf files for each Cancer type and convertint to vcf file.
 ```bash
 # From the github repository directory
 python ./DataGrooming/ExtractData.py
 ```
+1. The purpose of the maf -> vcf conversion is to allow for analysis of mutational classification that may differ for various transcript isoforms.
