@@ -19,7 +19,7 @@ bash ./SplitPCAWGData.sh
        - Type2
        - TypeN
        
-## Parsing data into individual patient maf files for each Cancer type and convertint to vcf file.
+## Parsing data into individual patient maf files for each Cancer type and convert to vcf file.
 ```bash
 # From the github repository directory
 python ./DataGrooming/ExtractData.py
