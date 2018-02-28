@@ -157,3 +157,5 @@ fabric.properties
 /PCAWGData/*.maf
 /PCAWGData/metadata/*
 /PCAWGData/Cancers/*
+
+.idea
