@@ -8,11 +8,13 @@ import time
 import subprocess
 from functools import wraps
 
+
 def OptionParsing():
     usage = 'usage: %prog [options] -f <*.h5>'
     parser = OptionParser(usage)
     parser.add_option('-i', '--inputFile', dest='inputMaf', default=None, help="Raw maf file.")
     parser.add_option('-e', '--releasenotes', dest='releaseNotes', default=None, help="Release Data corresponding to MAF file.")
+    parser.add_option('-s', '--skipmafstep', dest="skipParser", default=False, action="store_true", help="Skip over maf parsing (only if completed already.")
     (options, args) = parser.parse_args()
     return (options, parser)
 
@@ -57,67 +59,87 @@ def UpdateProgressGetN(fileName):
         pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
     return(int(pipe.read().decode("utf-8").lstrip(" ").split(" ")[0]))
 
-@fn_timer
-def ReadFile(Options):
-    n = UpdateProgressGetN(Options.inputMaf)
-
-    inFile = gzip.open(Options.inputMaf, 'r')
-    i = 0
-    genes = []
-    site = []
-    for line in inFile:
-        if line.decode("UTF-8").startswith("Hugo_Symbol\tChromosome\tStart_position") == False:
-            genes.append(line.decode("UTF-8").split('\t')[0])
-            site.append(line.decode("UTF-8").split('\t')[5])
-
-            i+=1
-        else:
-            print(line.decode("UTF-8").split('\t'))
-
-        UpdateProgress(i, n, "Reading maf file...")
-    inFile.close()
-
-    print(list(set(genes)))
-    print(len(genes))
-    print(list(set(site)))
-    print(len(site))
-
 class PCAWGData:
-
-    def __init__(self, CancerType, header):
+    def __init__(self, Options, CancerType, mafFile):
         self.CancerType = CancerType
-        self.header = header
-        self.AllPatientDataUnparsed = []
-        self.PatientDataParsed = [] # Each list entry is a dict for a patient of cancer type X
+        self.mafFile = mafFile
+        # TODO Get both patients, tumors, and mutations all at once!
+        self.patients = None
+        self.tumourIDs = None
+        self.patTumorMapping = None
+        self.patientMuts = {} # Patient : [Muts]
+        self.GetIndividualPatients()
+        if Options.skipParser!=True:
+            self.WriteMafFiles()
 
-    def ParseAllPatsIntoInd(self):
-        for i in self.AllPatientDataUnparsed:
-            self.PatientDataParsed.append(dict(zip(self.header, i)))
-        self.AllPatientDataUnparsed = None
+    def GetIndividualPatients(self):
+        f = gzip.open(self.mafFile, 'rb')
 
-def PatientInfo(Options):
-    n = UpdateProgressGetN(Options.releaseNotes)
+        patients = []
+        tumours = []
+        mapping = {}
+        for line in f:
+            # Gets patients from the MAF File
+            patients.append(line.decode('UTF-8').rstrip('\n').split('\t')[len(line.decode('UTF-8').rstrip('\n').split('\t')) - 1])
+            # Gets tumours from the MAF File, Line 12 is patient tumor ID
+            tumours.append(line.decode('UTF-8').rstrip('\n').split('\t')[12])
 
-    with open(Options.releaseNotes, 'r') as inFile:
-        lines = [line.rstrip('\n').split('\t') for line in inFile.readlines()]
-    head = lines[0]
-    del lines[0]
-    print(head)
+            # Maps patient with tumours. PatientX : TumourY1, TumourY2
+            try:
+                mapping[line.decode('UTF-8').rstrip('\n').split('\t')[len(line.decode('UTF-8').rstrip('\n').split('\t')) - 1]].append(line.decode('UTF-8').rstrip('\n').split('\t')[12])
+            except KeyError:
+                mapping.update({ line.decode('UTF-8').rstrip('\n').split('\t')[len(line.decode('UTF-8').rstrip('\n').split('\t')) - 1] : [line.decode('UTF-8').rstrip('\n').split('\t')[12]] })
 
-    cancerTypes = {}
-    for i,line in enumerate(lines):
-        try:
-            cancerTypes[line[2].split('-')[0]].AllPatientDataUnparsed.append(line)
-        except KeyError:
-            cancerTypes.update({line[2].split('-')[0]:PCAWGData(line[2].split('-')[0], head)})
+            # Splits mutations into tumour sequencing specific mutations.
+            try:
+                self.patientMuts[line.decode('UTF-8').rstrip('\n').split('\t')[12]].append(line.decode('UTF-8').rstrip('\n'))
+            except KeyError:
+                self.patientMuts.update({line.decode('UTF-8').rstrip('\n').split('\t')[12]: [line.decode('UTF-8').rstrip('\n')] })
+        f.close()
 
-    for item in cancerTypes:
-        print(item + "-")
-        cancerTypes[item].ParseAllPatsIntoInd()
+        patients = list(set(patients))
+        tumours = list(set(tumours))
+        for patient in patients:
+            mapping[patient] = list(set(mapping[patient]))
 
-    for item in head:
-        print(item)
+        print("INFO: %s Patients: %s"%(self.CancerType, len(patients)))
+        print("INFO: %s Tumours: %s"%(self.CancerType, len(tumours)))
 
+        print("INFO: Multiple samples found for an individual patient: %s"%(len(tumours)-len(patients)))
+
+        self.patients = patients
+        self.tumourIDs = tumours
+        self.patTumorMapping = mapping
+
+    def WriteMafFiles(self):
+        n = len(self.patients)
+        i=0
+        for patient in self.patients:
+            for tumour in self.patTumorMapping[patient]:
+                f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
+                for mut in self.patientMuts[tumour]:
+                    f.write((mut + '\n').encode('UTF-8'))
+                f.close()
+                UpdateProgress(i, n, "%s.%s.maf"%(patient, tumour))
+                i+=1
+
+@fn_timer
+def PrepareCancerClasses(Options, FilePath):
+    with open(FilePath.rstrip("DataGrooming")+"PCAWGData/CancerTypes.txt", 'r') as inFile:
+        cancerTypes = [line.rstrip('\n').replace("-","") for line in inFile.readlines()]
+
+    allData = {}
+    count = 0
+    for cancer in cancerTypes:
+        print("INFO: Processing %s"%(cancer))
+        dataFilePath = "%sPCAWGData/Cancers/%s/%s-.snvs.indels.maf.gz"%(FilePath.rstrip("DataGrooming"), cancer, cancer)
+        allData.update({cancer:PCAWGData(Options, cancer, dataFilePath)})
+        count+=1
+
+        if count == 1:
+            sys.exit()
+
+    return(allData)
 
 if __name__=="__main__":
     FilePath = os.path.dirname(os.path.abspath(__file__))
@@ -125,5 +147,4 @@ if __name__=="__main__":
     (Options, Parser) = OptionParsing()
     allOutDir = FilePath.rstrip("DataGrooming") + "PCAWGData"
 
-    PatientInfo(Options)
-    # ReadFile(Options)
+    allData = PrepareCancerClasses(Options, FilePath)
