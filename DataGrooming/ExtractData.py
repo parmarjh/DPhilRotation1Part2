@@ -7,13 +7,14 @@ import datetime
 import time
 import subprocess
 from functools import wraps
+import pandas as pd
 
 
 def OptionParsing():
     usage = 'usage: %prog [options] -f <*.h5>'
     parser = OptionParser(usage)
-    parser.add_option('-i', '--inputFile', dest='inputMaf', default=None, help="Raw maf file.")
-    parser.add_option('-e', '--releasenotes', dest='releaseNotes', default=None, help="Release Data corresponding to MAF file.")
+    # parser.add_option('-i', '--inputFile', dest='inputMaf', default=None, help="Raw maf file.")
+    # parser.add_option('-e', '--releasenotes', dest='releaseNotes', default=None, help="Release Data corresponding to MAF file.")
     parser.add_option('-s', '--skipmafstep', dest="skipParser", default=False, action="store_true", help="Skip over maf parsing (only if completed already.")
     (options, args) = parser.parse_args()
     return (options, parser)
@@ -60,21 +61,32 @@ def UpdateProgressGetN(fileName):
     return(int(pipe.read().decode("utf-8").lstrip(" ").split(" ")[0]))
 
 class PCAWGData:
-    def __init__(self, Options, CancerType, mafFile):
+    def __init__(self, FilePath, Options, CancerType, mafFile):
         self.CancerType = CancerType
         self.mafFile = mafFile
-        # TODO Get both patients, tumors, and mutations all at once!
+        self.metaData = None
+        self.excludedSamples = None
+        self.GetExcluded(FilePath)
         self.patients = None
         self.tumourIDs = None
         self.patTumorMapping = None
         self.patientMuts = {} # Patient : [Muts]
+        self.patientMafs = []
         self.GetIndividualPatients()
         if Options.skipParser!=True:
             self.WriteMafFiles()
 
+    def GetExcluded(self, FilePath):
+        df = pd.read_csv(FilePath.rstrip('DataGrooming')+"PCAWGData/metadata/release_may2016.v1.4.tsv", sep="\t", header=0, index_col=False)
+        df = df.loc[df['dcc_project_code'].str.contains(self.CancerType)] # Subset DataFrame for cancer type
+        self.metaData = df
+        df.to_csv("%s/%s.metadata.csv"%(self.mafFile.split('/%s-'%(self.CancerType))[0], self.CancerType), index=False)
+        # exclDF = df.loc[df['wgs_exclusion_white_gray']=="Excluded"]
+
+
+
     def GetIndividualPatients(self):
         f = gzip.open(self.mafFile, 'rb')
-
         patients = []
         tumours = []
         mapping = {}
@@ -112,16 +124,25 @@ class PCAWGData:
         self.patTumorMapping = mapping
 
     def WriteMafFiles(self):
+        '''
+        Only write MAF files for those that are white listed...
+        '''
         n = len(self.patients)
         i=0
         for patient in self.patients:
             for tumour in self.patTumorMapping[patient]:
-                f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
-                for mut in self.patientMuts[tumour]:
-                    f.write((mut + '\n').encode('UTF-8'))
-                f.close()
+                self.patientMafs.append("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour))
+                if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
+                    f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
+                    for mut in self.patientMuts[tumour]:
+                        f.write((mut + '\n').encode('UTF-8'))
+                    f.close()
                 UpdateProgress(i, n, "%s.%s.maf"%(patient, tumour))
                 i+=1
+        self.patientMuts = None # Get rid of patient muts, no longer needed. Clear memory of this information.
+
+    def ConvertToVCF(self):
+        pass
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):
@@ -133,11 +154,11 @@ def PrepareCancerClasses(Options, FilePath):
     for cancer in cancerTypes:
         print("INFO: Processing %s"%(cancer))
         dataFilePath = "%sPCAWGData/Cancers/%s/%s-.snvs.indels.maf.gz"%(FilePath.rstrip("DataGrooming"), cancer, cancer)
-        allData.update({cancer:PCAWGData(Options, cancer, dataFilePath)})
+        allData.update({cancer:PCAWGData(FilePath, Options, cancer, dataFilePath)})
         count+=1
 
-        if count == 1:
-            sys.exit()
+        # if count == 1:
+        #     sys.exit()
 
     return(allData)
 
