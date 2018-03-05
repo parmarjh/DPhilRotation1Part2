@@ -9,5 +9,7 @@ rm ./AllCancerFiles.txt
 # For each file get the counts of mutation types.
 while read line; do
   echo $line
-  gzip -cd $line | awk '{ print $6 }' | awk '{ print $6 }' | sort | uniq -c | sort -nr
-done <AllCancerFiles.txt
+  gzip -cd $line | awk '{ print $6 }' | sort | uniq -c | sort -nr
+done <AllCancerFilesOut.txt
+
+rm ./AllCancerFilesOut.txt
