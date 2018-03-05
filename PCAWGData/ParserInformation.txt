@@ -1,0 +1,120 @@
+INFO: BLCA Patients: 23
+INFO: BLCA Tumours: 23
+INFO: Multiple samples found for an individual patient: 0
+INFO: BOCA Patients: 69
+INFO: BOCA Tumours: 69
+INFO: Multiple samples found for an individual patient: 0
+INFO: BRCA Patients: 214
+INFO: BRCA Tumours: 214
+INFO: Multiple samples found for an individual patient: 0
+INFO: BTCA Patients: 12
+INFO: BTCA Tumours: 12
+INFO: Multiple samples found for an individual patient: 0
+INFO: CESC Patients: 20
+INFO: CESC Tumours: 20
+INFO: Multiple samples found for an individual patient: 0
+INFO: CLLE Patients: 95
+INFO: CLLE Tumours: 95
+INFO: Multiple samples found for an individual patient: 0
+INFO: CMDI Patients: 30
+INFO: CMDI Tumours: 63
+INFO: Multiple samples found for an individual patient: 33
+INFO: COAD Patients: 44
+INFO: COAD Tumours: 44
+INFO: Multiple samples found for an individual patient: 0
+INFO: DLBC Patients: 7
+INFO: DLBC Tumours: 7
+INFO: Multiple samples found for an individual patient: 0
+INFO: EOPC Patients: 42
+INFO: EOPC Tumours: 69
+INFO: Multiple samples found for an individual patient: 27
+INFO: ESAD Patients: 98
+INFO: ESAD Tumours: 98
+INFO: Multiple samples found for an individual patient: 0
+INFO: GACA Patients: 37
+INFO: GACA Tumours: 37
+INFO: Multiple samples found for an individual patient: 0
+INFO: GBM Patients: 41
+INFO: GBM Tumours: 41
+INFO: Multiple samples found for an individual patient: 0
+INFO: HNSC Patients: 44
+INFO: HNSC Tumours: 44
+INFO: Multiple samples found for an individual patient: 0
+INFO: KICH Patients: 45
+INFO: KICH Tumours: 45
+INFO: Multiple samples found for an individual patient: 0
+INFO: KIRC Patients: 37
+INFO: KIRC Tumours: 37
+INFO: Multiple samples found for an individual patient: 0
+INFO: KIRP Patients: 33
+INFO: KIRP Tumours: 33
+INFO: Multiple samples found for an individual patient: 0
+INFO: LAML Patients: 8
+INFO: LAML Tumours: 8
+INFO: Multiple samples found for an individual patient: 0
+INFO: LGG Patients: 18
+INFO: LGG Tumours: 18
+INFO: Multiple samples found for an individual patient: 0
+INFO: LICA Patients: 6
+INFO: LICA Tumours: 6
+INFO: Multiple samples found for an individual patient: 0
+INFO: LIHC Patients: 54
+INFO: LIHC Tumours: 54
+INFO: Multiple samples found for an individual patient: 0
+INFO: LINC Patients: 236
+INFO: LINC Tumours: 236
+INFO: Multiple samples found for an individual patient: 0
+INFO: LIRI Patients: 251
+INFO: LIRI Tumours: 261
+INFO: Multiple samples found for an individual patient: 10
+INFO: LUAD Patients: 38
+INFO: LUAD Tumours: 38
+INFO: Multiple samples found for an individual patient: 0
+INFO: LUSC Patients: 48
+INFO: LUSC Tumours: 48
+INFO: Multiple samples found for an individual patient: 0
+INFO: MALY Patients: 100
+INFO: MALY Tumours: 100
+INFO: Multiple samples found for an individual patient: 0
+INFO: MELA Patients: 70
+INFO: MELA Tumours: 70
+INFO: Multiple samples found for an individual patient: 0
+INFO: ORCA Patients: 13
+INFO: ORCA Tumours: 13
+INFO: Multiple samples found for an individual patient: 0
+INFO: OV Patients: 113
+INFO: OV Tumours: 113
+INFO: Multiple samples found for an individual patient: 0
+INFO: PACA Patients: 239
+INFO: PACA Tumours: 241
+INFO: Multiple samples found for an individual patient: 2
+INFO: PAEN Patients: 85
+INFO: PAEN Tumours: 85
+INFO: Multiple samples found for an individual patient: 0
+INFO: PBCA Patients: 235
+INFO: PBCA Tumours: 235
+INFO: Multiple samples found for an individual patient: 0
+INFO: PRAD Patients: 168
+INFO: PRAD Tumours: 217
+INFO: Multiple samples found for an individual patient: 49
+INFO: READ Patients: 16
+INFO: READ Tumours: 16
+INFO: Multiple samples found for an individual patient: 0
+INFO: RECA Patients: 74
+INFO: RECA Tumours: 74
+INFO: Multiple samples found for an individual patient: 0
+INFO: SARC Patients: 34
+INFO: SARC Tumours: 34
+INFO: Multiple samples found for an individual patient: 0
+INFO: SKCM Patients: 37
+INFO: SKCM Tumours: 37
+INFO: Multiple samples found for an individual patient: 0
+INFO: STAD Patients: 38
+INFO: STAD Tumours: 38
+INFO: Multiple samples found for an individual patient: 0
+INFO: THCA Patients: 48
+INFO: THCA Tumours: 48
+INFO: Multiple samples found for an individual patient: 0
+INFO: UCEC Patients: 51
+INFO: UCEC Tumours: 51
+INFO: Multiple samples found for an individual patient: 0

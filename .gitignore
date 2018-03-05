@@ -159,3 +159,5 @@ fabric.properties
 /PCAWGData/Cancers/*
 
 .idea/
+
+/DataTables/*

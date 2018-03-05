@@ -142,7 +142,9 @@ class PCAWGData:
         self.patientMuts = None # Get rid of patient muts, no longer needed. Clear memory of this information.
 
     def ConvertToVCF(self):
+        # TODO Create this function to do the conversions.
         pass
+
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):
@@ -167,5 +169,7 @@ if __name__=="__main__":
     now = datetime.datetime.now()
     (Options, Parser) = OptionParsing()
     allOutDir = FilePath.rstrip("DataGrooming") + "PCAWGData"
+
+    hg19GenomeSize = 3137161264 # Taken from adding up hg19 chromosome sizes.
 
     allData = PrepareCancerClasses(Options, FilePath)
