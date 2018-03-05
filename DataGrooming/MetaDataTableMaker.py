@@ -38,6 +38,14 @@ def WriteTable(FilePath, data):
         for item in data:
             outFile.write("%s\t%s\t%s\n"%(item, data[item]['Patients'], data[item]['Tumours']))
 
+def GetMutationsPerMB(FilePath):
+    genomeLen = 3137161264
+
+    with open(FilePath.rstrip("DataGrooming")+"PCAWGData/MutationCounts.txt", 'r') as inFile:
+        lines = [line.rstrip('\n') for line in inFile.readlines()]
+
+    print(lines)
+
 def CreatePlot(FilePath):
     df = pd.read_csv(FilePath.strip("DataGrooming") + "DataTables/Patient_and_tumor_counts.txt", sep="\t", index_col=False, header=0)
     sums = sum(df['Patient'])
@@ -62,9 +70,11 @@ def main():
     FilePath = os.path.dirname(os.path.abspath(__file__))
     ParserInfo = FilePath.rstrip("DataGrooming") + "PCAWGData/ParserInformation.txt"
 
-    ParseFile(FilePath, ParserInfo)
+    # ParseFile(FilePath, ParserInfo)
+    #
+    # CreatePlot(FilePath)
 
-    CreatePlot(FilePath)
+    GetMutationsPerMB(FilePath)
 
 
 if __name__=="__main__":

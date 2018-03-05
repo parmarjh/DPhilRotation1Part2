@@ -157,6 +157,7 @@ fabric.properties
 /PCAWGData/*.maf
 /PCAWGData/metadata/*
 /PCAWGData/Cancers/*
+/PCAWGData/MutationCounts.txt
 
 .idea/
 
