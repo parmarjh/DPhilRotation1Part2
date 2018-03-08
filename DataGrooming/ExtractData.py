@@ -154,6 +154,7 @@ class PCAWGData:
             file = file.rstrip('.gz')
             os.system("cat %s %s > %s"%(headerFile, file, file.rstrip('.maf')+'.head.maf'))
             os.system('rm %s'%(file))
+            print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
             os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.rstrip('.maf')+'.head.maf', Options.refGenome, outDir))
             os.system('gzip %s'%(file.rstrip('.maf')+'.head.maf'))
 
