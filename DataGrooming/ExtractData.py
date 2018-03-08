@@ -16,6 +16,8 @@ def OptionParsing():
     # parser.add_option('-i', '--inputFile', dest='inputMaf', default=None, help="Raw maf file.")
     # parser.add_option('-e', '--releasenotes', dest='releaseNotes', default=None, help="Release Data corresponding to MAF file.")
     parser.add_option('-s', '--skipmafstep', dest="skipParser", default=False, action="store_true", help="Skip over maf parsing (only if completed already.")
+    parser.add_option('-v', '--makevcf', dest="makeVCFs", default=True, action='store_false', help="Flat to turn off vcf conversion.")
+    parser.add_option('-r', '--ref_genome', dest="refGenome", default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa", help="Reference genome to be used for maf2vcf conversion.")
     (options, args) = parser.parse_args()
     return (options, parser)
 
@@ -75,6 +77,8 @@ class PCAWGData:
         self.GetIndividualPatients()
         if Options.skipParser!=True:
             self.WriteMafFiles()
+        if Options.makeVCFs==True:
+            self.ConvertToVCF(FilePath, Options)
 
     def GetExcluded(self, FilePath):
         df = pd.read_csv(FilePath.rstrip('DataGrooming')+"PCAWGData/metadata/release_may2016.v1.4.tsv", sep="\t", header=0, index_col=False)
@@ -82,7 +86,6 @@ class PCAWGData:
         self.metaData = df
         df.to_csv("%s/%s.metadata.csv"%(self.mafFile.split('/%s-'%(self.CancerType))[0], self.CancerType), index=False)
         # exclDF = df.loc[df['wgs_exclusion_white_gray']=="Excluded"]
-
 
 
     def GetIndividualPatients(self):
@@ -139,12 +142,17 @@ class PCAWGData:
                     f.close()
                 UpdateProgress(i, n, "%s.%s.maf"%(patient, tumour))
                 i+=1
+        print("\n")
         self.patientMuts = None # Get rid of patient muts, no longer needed. Clear memory of this information.
 
-    def ConvertToVCF(self):
-        # TODO Create this function to do the conversions.
-        pass
-
+    def ConvertToVCF(self, FilePath, Options):
+        print("INFO: Creating VCF files.")
+        headerFile = FilePath.rstrip("DataGrooming") + "PCAWGData/MafHeader.txt"
+        for file in self.patientMafs:
+            os.system("gzip -d %s" %(file))
+            file = file.rstrip('.gz')
+            os.system("cat %s %s | gzip > %s"%(headerFile, file, file.rstrip('.maf')+'.head.maf.gz'))
+            os.system('rm %s'%(file))
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):
@@ -159,8 +167,8 @@ def PrepareCancerClasses(Options, FilePath):
         allData.update({cancer:PCAWGData(FilePath, Options, cancer, dataFilePath)})
         count+=1
 
-        # if count == 1:
-        #     sys.exit()
+        if count == 1:
+            sys.exit()
 
     return(allData)
 
