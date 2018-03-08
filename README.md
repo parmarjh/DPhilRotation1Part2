@@ -6,6 +6,9 @@ The process is as follows.
 
 ###### Please note that no data is to be stored within this repository. All data storage complies with proper patient data protection.
 
+## Dependencies
+1. Python (>=3.6)
+
 ## Preparing PCAWG Data for Analysis
 ```bash
 cd ./PCAWGData # Not on github

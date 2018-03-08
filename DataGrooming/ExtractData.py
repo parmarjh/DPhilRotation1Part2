@@ -142,17 +142,20 @@ class PCAWGData:
                     f.close()
                 UpdateProgress(i, n, "%s.%s.maf"%(patient, tumour))
                 i+=1
-        print("\n")
+        print("")
         self.patientMuts = None # Get rid of patient muts, no longer needed. Clear memory of this information.
 
     def ConvertToVCF(self, FilePath, Options):
         print("INFO: Creating VCF files.")
         headerFile = FilePath.rstrip("DataGrooming") + "PCAWGData/MafHeader.txt"
         for file in self.patientMafs:
+            outDir = '/'.join(file.split('/')[0:len(file.split('/'))-1]) + "/"
             os.system("gzip -d %s" %(file))
             file = file.rstrip('.gz')
-            os.system("cat %s %s | gzip > %s"%(headerFile, file, file.rstrip('.maf')+'.head.maf.gz'))
+            os.system("cat %s %s > %s"%(headerFile, file, file.rstrip('.maf')+'.head.maf'))
             os.system('rm %s'%(file))
+            os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.rstrip('.maf')+'.head.maf', Options.refGenome, outDir))
+            os.system('gzip %s'%(file.rstrip('.maf')+'.head.maf'))
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):
@@ -181,3 +184,5 @@ if __name__=="__main__":
     hg19GenomeSize = 3137161264 # Taken from adding up hg19 chromosome sizes.
 
     allData = PrepareCancerClasses(Options, FilePath)
+
+    print("INFO: Process Complete.")

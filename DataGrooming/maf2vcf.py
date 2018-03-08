@@ -19,7 +19,8 @@ def OptionParsing():
     parser.add_option('-i', '--input_maf', dest="maf", default=None, help=".maf file to be converted.")
     parser.add_option('-o', '--output_dir', dest="outDir", default=None, help="Output directory for .vcf file")
     parser.add_option('-r', '--ref_genome', dest="refGenome", default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa", help="Reference genome to be used for maf2vcf conversion.")
-    parser.add_option('-s', '--spotCheckMaf', dest='spotcheck', default=False, action='store_true', help="Use this flag if ")
+    parser.add_option('-s', '--spotCheckMaf', dest='spotcheck', default=False, action='store_true', help="Use this flag to verify reference matching to maf file. Default=False")
+    parser.add_option('-v', '--verbose', dest='verbose', default=False, action='store_true', help="Use this flag to turn on verbose mode. Default=False")
     (options, args) = parser.parse_args()
     if options.maf is None or options.outDir is None or options.refGenome is None:
         print("ERROR: Please include arguments for maf file, output directory, and reference genome (single fasta file).")
@@ -69,22 +70,36 @@ def UpdateProgress(i, n, DisplayText):
     sys.stdout.write("[%-20s] %d%%\t INFO: %s" % ('=' * int(20 * j), 100 * j, DisplayText))
     sys.stdout.flush()
 
-def SamtoolsFaidx(refGenome, genomicPos, ref):
+def SamtoolsFaidx(refGenome, genomicPos, ref='', check=True):
+    '''
+    Obtain reference sequence and perform check if needed.
+
+    :param check: Whether or not to throw error if the provided reference matches
+    :param refGenome: Reference Fasta file
+    :param genomicPos: Genomic Position of interest.
+    :param ref: Reference sequence to compare to fetched sequence.
+    :return: Fetched reference sequence.
+    '''
     proc = subprocess.Popen(['samtools','faidx',refGenome, genomicPos], stdout=subprocess.PIPE)
     proc.wait()
     outInfo = proc.stdout.readlines()
     refSeq = ''.join([line.decode('utf-8').rstrip('\n') for line in outInfo[1:]])
-    if refSeq == ref:
-        return(True)
+
+    if check:
+        if refSeq == ref:
+            return(True)
+        else:
+            print('ERROR: May not be proper reference genome')
+            print('ERROR: Improper reference. Found %s at %s. Reference genome shows %s' % (ref, genomicPos, refSeq))
+            sys.exit()
+        return(None)
     else:
-        print('ERROR: May not be proper reference genome')
-        print('ERROR: Improper reference. Found %s at %s. Reference genome shows %s' % (ref, genomicPos, refSeq))
-        sys.exit()
+        return(refSeq)
 
 def SpotCheckProperReference(mafFile, Options, fileLength):
     '''
     Randomly samples the file to ensure proper reference file is used. Random sampling is employed to ensure proper
-    reference is used. Will spot check 10% of a file of more than 200 variants.
+    reference is used. Will spot check 2% of a file of more than 200 variants.
 
     :param mafFile: Input mafFile object (opened)
     :param Options: Parser Options
@@ -93,7 +108,7 @@ def SpotCheckProperReference(mafFile, Options, fileLength):
     '''
     print("INFO: Verifying maf file.")
     if fileLength > 200:
-        n=0.1
+        n=0.02
     else:
         n=1.
     a = np.arange(fileLength)
@@ -124,7 +139,7 @@ def SpotCheckProperReference(mafFile, Options, fileLength):
     print('')
     return(toContinue)
 
-def processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile):
+def processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options):
     ref = line[7]
     tAllele1 = line[8]  # Normal Allele
     tAllele2 = line[9]  # Alt Allele
@@ -159,7 +174,8 @@ def processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile):
     elif ref_reads == 'NA' or alt_reads == 'NA' and reportedVAF == 'NA':
         with open(errorFile, 'a') as errerOut:
             errerOut.write('\t'.join(line)+'\n')
-        print("WARNING: %s" % '\t'.join(line))
+        if Options.verbose:
+            print("WARNING: %s" % '\t'.join(line))
         return(None)
 
     # Simple SNV cases
@@ -178,25 +194,174 @@ def processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile):
     if (ref != tAllele1 and ref != tAllele2) or (strand != '+' and strand != '-'):
         with open(errorFile, 'a') as errerOut:
             errerOut.write('\t'.join(line)+'\n')
-        print("WARNING: %s" % '\t'.join(line))
+        if Options.verbose:
+            print("WARNING: %s" % '\t'.join(line))
         return(None)
 
     # Create INFO field
-    INFO = "MAF_Hugo_Symbol=" + line[0] + ";MAF_ref_context=" + line[15].upper() + ";MAF_Genome_Change=" + line[14] + ";MAF_Variant_Type=" + variantType + ";MAF_Variant_Classification=" + mutType
+    INFO = "MAF_Hugo_Symbol=" + line[0] + ";MAF_ref_context=" + line[15].upper() + ";MAF_Genome_Change=" + line[14] + ";MAF_Variant_Type=" + variantType + ";MAF_Variant_Classification=" + mutType +";DCC_Project_Code=" + line[44]
+
+    # Normal variant field if anything
+    if line[41]=="NA":
+        normalGenotype = ".:.,.:.:."
+    else:
+        normalGenotype = ".:.,.:.:%s"%(line[41])
 
     # Final vcf line out
-    lineOut = [chrom, pos, rsid, refAllele, altAllele, QUAL, '.', INFO, "GT:AD:DP:VF", ".:.,.:.:.", sampleField]
+    lineOut = [chrom, pos, rsid, refAllele, altAllele, QUAL, '.', INFO, "GT:AD:DP:VF", normalGenotype, sampleField]
 
-    print(lineOut)
     return(lineOut)
 
-def processDEL(line):
-    pass
+def processDEL(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options):
+    ref = line[7]
+    tAllele1 = line[8]  # Normal Allele Typically
+    tAllele2 = line[9]  # Alt Allele Typically
 
-def processINS(line):
-    pass
+    QUAL = line[42]
+    if QUAL == 'None' or QUAL == 'NA' or QUAL == '':
+        QUAL = '.'
 
-def CreateVCFLine(line, errorFile):
+    if ref == tAllele1:
+        altAllele = tAllele1
+        refAllele = tAllele2
+    else:
+        altAllele = tAllele2
+        refAllele = tAllele1
+
+    # Obtain the reference sequence + 1 preceding base for the DEL
+    refAnchorPos = str(int(pos)-1) # Fetch the base that precedes the deletion.
+    refSeq = SamtoolsFaidx(Options.refGenome, chrom + ":" + refAnchorPos + "-" + line[3], check=False)
+
+    if refSeq[1:] != altAllele:
+        print("ERROR: Deletion alternative allele does not match reference sequence. %s" % ('\t'.join(line)))
+        sys.exit()
+
+    # VCF reference is the preceding base plus the reported deletion in the MAF file.
+    vcfRef = refSeq
+
+    # VCF has base directly preceding the deletion as the alternative base and the variant pos
+    vcfAlt=refSeq[0]
+    vcfPos=refAnchorPos
+
+    # Get read information
+    iref_reads = line[37]
+    ialt_reads = line[36]
+    ref_reads = line[39]
+    alt_reads = line[38]
+    reportedVAF = line[28]
+    i_t_vaf = line[43]
+    # Get phasing information and determine reads for vaf==1
+    if (ref_reads != 'NA' or iref_reads!='NA') and (alt_reads != 'NA' or ialt_reads!='NA'):
+        GT="0/1"
+        ref_reads = [read for read in [ref_reads, iref_reads] if read != "NA"][0]
+        alt_reads = [read for read in [alt_reads, ialt_reads] if read != "NA"][0]
+        total_reads = str(int(ref_reads) + int(alt_reads))
+        vaf = str(int(alt_reads)/float(total_reads))
+    elif i_t_vaf!="" and i_t_vaf!="NA" and ref_reads == 'NA' and iref_reads=='NA' and alt_reads == 'NA' and ialt_reads=='NA':
+        vaf=i_t_vaf
+        GT="./."
+        ref_reads = '.'
+        alt_reads = '.'
+        total_reads = '.'
+    elif (i_t_vaf=="" or i_t_vaf=="NA") and ref_reads == 'NA' and iref_reads=='NA' and alt_reads == 'NA' and ialt_reads=='NA':
+        GT='./.'
+        ref_reads='.'
+        alt_reads='.'
+        total_reads='.'
+        vaf='.'
+    else:
+        sys.exit("ERROR: Problem processing DEL %s"%('\t'.join(line)))
+
+    sampleField = ':'.join([GT, ','.join([ref_reads, alt_reads]), total_reads, vaf])
+
+    # Create INFO field
+    INFO = "MAF_Hugo_Symbol=" + line[0] + ";MAF_ref_context=" + line[15].upper() + ";MAF_Genome_Change=" + line[
+        14] + ";MAF_Variant_Type=" + variantType + ";MAF_Variant_Classification=" + mutType + ";DCC_Project_Code=" + \
+           line[44]
+
+    # Normal variant field if anything
+    if line[41] == "NA":
+        normalGenotype = ".:.,.:.:."
+    else:
+        normalGenotype = ".:.,.:.:%s" % (line[41])
+
+    lineOut = [chrom, vcfPos, rsid, vcfRef, vcfAlt, QUAL, '.', INFO, "GT:AD:DP:VF", normalGenotype, sampleField]
+
+    return(lineOut)
+
+def processINS(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options):
+    ref = line[7]
+    tAllele1 = line[8]  # Normal Allele Typically
+    tAllele2 = line[9]  # Alt Allele Typically
+
+    QUAL = line[42]
+    if QUAL == 'None' or QUAL == 'NA' or QUAL == '':
+        QUAL = '.'
+
+    if tAllele1 == '-':
+        altAllele = tAllele2
+    else:
+        altAllele = tAllele1
+
+    # Obtain the reference sequence + 1 preceding base for the DEL
+    refAnchorPos = str(int(pos) - 1)  # Fetch the base that precedes the deletion.
+    refSeq = SamtoolsFaidx(Options.refGenome, chrom + ":" + refAnchorPos + "-" + line[3], check=False)
+
+    # VCF reference is the preceding base in the insertion in MAF
+    vcfRef = refSeq[0]
+
+    # VCF has base directly preceding the deletion as the alternative base and the variant pos
+    vcfAlt = refSeq[0]+altAllele
+    vcfPos = refAnchorPos
+
+    # Get read information
+    iref_reads = line[37]
+    ialt_reads = line[36]
+    ref_reads = line[39]
+    alt_reads = line[38]
+    reportedVAF = line[28]
+    i_t_vaf = line[43]
+    # Get phasing information and determine reads for vaf==1
+    if (ref_reads != 'NA' or iref_reads != 'NA') and (alt_reads != 'NA' or ialt_reads != 'NA'):
+        GT = "0/1"
+        ref_reads = [read for read in [ref_reads, iref_reads] if read != "NA"][0]
+        alt_reads = [read for read in [alt_reads, ialt_reads] if read != "NA"][0]
+        total_reads = str(int(ref_reads) + int(alt_reads))
+        vaf = str(int(alt_reads) / float(total_reads))
+    elif i_t_vaf != "" and i_t_vaf != "NA" and ref_reads == 'NA' and iref_reads == 'NA' and alt_reads == 'NA' and ialt_reads == 'NA':
+        vaf = i_t_vaf
+        GT = "./."
+        ref_reads = '.'
+        alt_reads = '.'
+        total_reads = '.'
+    elif (
+            i_t_vaf == "" or i_t_vaf == "NA") and ref_reads == 'NA' and iref_reads == 'NA' and alt_reads == 'NA' and ialt_reads == 'NA':
+        GT = './.'
+        ref_reads = '.'
+        alt_reads = '.'
+        total_reads = '.'
+        vaf = '.'
+    else:
+        sys.exit("ERROR: Problem processing INS %s" % ('\t'.join(line)))
+
+    sampleField = ':'.join([GT, ','.join([ref_reads, alt_reads]), total_reads, vaf])
+
+    # Create INFO field
+    INFO = "MAF_Hugo_Symbol=" + line[0] + ";MAF_ref_context=" + line[15].upper() + ";MAF_Genome_Change=" + line[
+        14] + ";MAF_Variant_Type=" + variantType + ";MAF_Variant_Classification=" + mutType + ";DCC_Project_Code=" + \
+           line[44]
+
+    # Normal variant field if anything
+    if line[41] == "NA":
+        normalGenotype = ".:.,.:.:."
+    else:
+        normalGenotype = ".:.,.:.:%s" % (line[41])
+
+    lineOut = [chrom, vcfPos, rsid, vcfRef, vcfAlt, QUAL, '.', INFO, "GT:AD:DP:VF", normalGenotype, sampleField]
+
+    return (lineOut)
+
+def CreateVCFLine(line, errorFile, Options):
     line = line.rstrip('\n').split('\t')
 
     # Genomic Position
@@ -207,8 +372,9 @@ def CreateVCFLine(line, errorFile):
     if rsid == '':
         rsid = '.'
     elif rsid.startswith("rs") == False:
-        print(line)
-        sys.exit("Problem in id column")
+        if Options.verbose:
+            print("ERROR: %s"%(line))
+        sys.exit("ERROR: Problem in id column")
 
     # Strand Information
     strand = line[4]
@@ -225,14 +391,15 @@ def CreateVCFLine(line, errorFile):
 
     # Determine type of variant to continue processing.
     if variantType=="SNP":
-        linetowrite = processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile)
+        linetowrite = processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options)
     elif variantType=="DEL":
-        linetowrite = processDEL(line)
+        linetowrite = processDEL(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options)
     elif variantType=="INS":
-        linetowrite = processINS(line)
+        linetowrite = processINS(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options)
     else:
-        print("WARNING: Malformed MAF entry. %s"%('\t'.join(line)))
-        sys.exit()
+        if Options.verbose:
+            print("WARNING: Malformed MAF entry. %s"%('\t'.join(line)))
+        sys.exit("ERROR: Malformed MAF entry.")
 
     return(linetowrite)
 
@@ -249,6 +416,7 @@ def CreateHeader(ioObject, Options, tumorID, normalID):
     ioObject.write("##INFO=<ID=MAF_Genome_Change,Number=1,Type=String,Description=\"Genome change in original MAF file.\">\n")
     ioObject.write("##INFO=<ID=MAF_Variant_Type,Number=1,Type=String,Description=\"Variant type (SNP,INS,DEL) in original MAF file.\">\n")
     ioObject.write("##INFO=<ID=MAF_Variant_Classification,Number=1,Type=String,Description=\"Variant Classification (if SNP) in original MAF file.\">\n")
+    ioObject.write("##INFO=<ID=DCC_Project_Code,Number=1,Type=String,Description=\"DCC Project Code in original MAF file.\">\n")
     ioObject.write("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n")
     ioObject.write("##FORMAT=<ID=AD,Number=2,Type=Integer,Description=\"Allelic depths of REF and ALT(s) in the order listed\">\n")
     ioObject.write("##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Total read depth across this site\">\n")
@@ -285,19 +453,24 @@ def ProcessFile(Options):
 
             CreateHeader(outVCF, Options, tumorID, normalID)
             for line in inFile:
-                # UpdateProgress(i, n, "Processing Maf File")
+                UpdateProgress(i, n, "Processing Maf File")
                 if line.startswith('Hugo_Symbol	Chromosome	Start_position'):
                     count+=1
                     i += 1
                 else:
                     i += 1
-                    linetoWrite = CreateVCFLine(line, errorFile)
+                    linetoWrite = CreateVCFLine(line, errorFile, Options)
 
                     if linetoWrite is not None:
                         outVCF.write('\t'.join(linetoWrite)+'\n')
 
     print('')
-
+    print("INFO: Sorting vcf file.")
+    vcfFile = Options.outDir + Options.maf.split('/')[len(Options.maf.split('/'))-1].replace('.maf','.vcf')
+    vcfFileSorted = Options.outDir + Options.maf.split('/')[len(Options.maf.split('/'))-1].replace('.head.maf','.sorted.vcf.gz')
+    os.system("cat %s | awk '$1 ~ /^#/ {print $0;next} {print $0 | \"LC_ALL=C sort -k1,1 -k2,2n\"}' | gzip > %s"%(vcfFile, vcfFileSorted))
+    os.system("rm %s"%(vcfFile))
+    os.system("gzip %s"%(errorFile))
 
 def main():
     print("INFO: Processing MAF file.")
