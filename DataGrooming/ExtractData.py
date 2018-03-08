@@ -167,8 +167,8 @@ def PrepareCancerClasses(Options, FilePath):
         allData.update({cancer:PCAWGData(FilePath, Options, cancer, dataFilePath)})
         count+=1
 
-        # if count == 1:
-        #     sys.exit()
+        if count == 1:
+            sys.exit()
 
     return(allData)
 
