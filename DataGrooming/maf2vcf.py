@@ -1,7 +1,7 @@
 '''
-Custom Script to convert an individual patient MAF to a vcf version 4.2 file using python 3.6.
-Requries Samtools!!!
+Script to convert a MAF to a vcf4.2 file using python >=3.6.
 Created by Ryan Schenck
+8 March 2018
 '''
 
 import os

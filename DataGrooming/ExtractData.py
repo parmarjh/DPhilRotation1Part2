@@ -1,3 +1,7 @@
+'''
+Created by Ryan Schenck
+8 March 2018
+'''
 import sys
 import os
 import gzip
