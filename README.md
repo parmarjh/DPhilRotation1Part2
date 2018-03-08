@@ -8,7 +8,8 @@ The process is as follows.
 
 ## Dependencies
 1. Python (>=3.6)
-2. Ensembl GRCh37.75 Reference Build as a single *.fa (indexed)
+2. samtools (==1.4.1)
+3. Ensembl GRCh37.75 Reference Build as a single *.fa (indexed)
 
 ## Preparing PCAWG Data for Analysis
 ```bash
