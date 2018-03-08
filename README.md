@@ -8,6 +8,7 @@ The process is as follows.
 
 ## Dependencies
 1. Python (>=3.6)
+2. Ensembl GRCh37.75 Reference Build as a single *.fa (indexed)
 
 ## Preparing PCAWG Data for Analysis
 ```bash
@@ -25,6 +26,36 @@ bash ./SplitPCAWGData.sh
 ## Parsing data into individual patient maf files for each Cancer type and convert to vcf file.
 ```bash
 # From the github repository directory
-python ./DataGrooming/ExtractData.py
+python ./DataGrooming/ExtractData.py --ref_genome=/Path/To/Reference/Genome/Reference.fa
+```
+1. This script will process each patients set of variants out of the maf files created for each cancer type above.
+2. Then it will create a sorted, compressed vcf file.
+
+## Alternatively running maf2vcf conversion alone.
+```bash
+python ./DataGrooming/maf2vcf.py --help
+
+# Yields the following:
+Usage: maf2vcf.py -i <*.maf> -o <directory> -r <ref.fa>
+
+Options:
+  -h, --help            show this help message and exit
+  -i MAF, --input_maf=MAF
+                        .maf file to be converted.
+  -o OUTDIR, --output_dir=OUTDIR
+                        Output directory for .vcf file
+  -r REFGENOME, --ref_genome=REFGENOME
+                        Reference genome to be used for maf2vcf conversion.
+  -s, --spotCheckMaf    Use this flag to verify reference matching to maf
+                        file. Default=False
+  -v, --verbose         Use this flag to turn on verbose mode. Default=False
+  
+# To run (maf file should be decompressed at this point)
+# Highly recommend using --spotCheckMaf (will take longer)
+python ./DataGrooming/maf2vcf.py --spotCheckMaf --input_maf=/Path/To/Your/PCAWG/maf/file.maf --output_dir=/Your/Output/Dir/ --ref_genome=/Reference/Ref.fa
 ```
 1. The purpose of the maf -> vcf conversion is to allow for analysis of mutational classification that may differ for various transcript isoforms.
+2. The output of maf2vcf is a sorted and compressed .vcf file.
+   - Two files will be created.
+     - A *.ignoredSNVs.maf.gz file containing unprocessed variants (primarily due to insufficient information).
+     - A *.sorted.vcf.gz file containing the processed variants.
