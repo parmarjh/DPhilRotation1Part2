@@ -108,21 +108,134 @@ def SpotCheckProperReference(mafFile, Options, fileLength):
                 UpdateProgress(count, len(a), "INFO: Verifying maf file")
                 count+=1
                 line = line.rstrip('\n').split('\t')
-                if len(line) == 46:
-                    del line[5]  # Ensures that the proper format is met by forcefully deleting the strange insterted \t
                 genomicPos = line[1] + ":" + line[2] + "-" + line[3]
                 ref = line[7]
                 mutType = line[5]
-                if mutType != "INS":
+                variantClass = line[6]
+                if variantClass != "INS":
                     toContinue = SamtoolsFaidx(Options.refGenome, genomicPos, ref)
                 if count == len(a):
                     print('')
                     return(toContinue)
-        elif i == 0 and line.startswith('Hugo_Symbol	Chromosome	Start_position') == False:
+        elif i != 0 and line.startswith('Hugo_Symbol	Chromosome	Start_position') == False:
+            print("")
             print("ERROR: No header found in maf file.")
         i+=1
     print('')
     return(toContinue)
+
+def processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile):
+    ref = line[7]
+    tAllele1 = line[8]  # Normal Allele
+    tAllele2 = line[9]  # Alt Allele
+    QUAL = line[42]
+
+    if QUAL == 'None' or QUAL == 'NA' or QUAL == '':
+        QUAL = '.'
+    if ref == tAllele1:
+        altAllele = tAllele1
+        refAllele = tAllele2
+    else:
+        altAllele = tAllele2
+        refAllele = tAllele1
+
+    ref_reads = line[39]
+    alt_reads = line[38]
+    reportedVAF = line[28]
+    # Get phasing information and determine reads for vaf==1
+    if ref_reads == 'NA' or alt_reads == 'NA' and reportedVAF == '1':
+        GT = "1/1" # Appears to be homozygous for alternative allele (germline unlikely since it is called w.r.t normal?)
+        vaf = reportedVAF # Sets VAF equal to 1
+        if ref_reads == 'NA':
+            ref_reads = '.'
+            total_reads = alt_reads
+        else:
+            alt_reads = '.'
+            total_reads = ref_reads
+
+        sampleField = ':'.join([GT, ','.join([ref_reads, alt_reads]), total_reads, vaf])
+
+    # Tossing these very strange mutations within the MAF file.
+    elif ref_reads == 'NA' or alt_reads == 'NA' and reportedVAF == 'NA':
+        with open(errorFile, 'a') as errerOut:
+            errerOut.write('\t'.join(line)+'\n')
+        print("WARNING: %s" % '\t'.join(line))
+        return(None)
+
+    # Simple SNV cases
+    else:
+        total_reads = str(int(ref_reads) + int(alt_reads))
+        vaf = repr(round(int(alt_reads) / float(total_reads), 4))
+
+        if vaf != '1.' and strand=="+" or strand=="-":
+            GT="0|1"
+        else:
+            GT="0/1"
+
+        sampleField = ':'.join([GT, ','.join([ref_reads, alt_reads]), total_reads, vaf])
+
+    # Last check for interesting but unresolved MAF line
+    if (ref != tAllele1 and ref != tAllele2) or (strand != '+' and strand != '-'):
+        with open(errorFile, 'a') as errerOut:
+            errerOut.write('\t'.join(line)+'\n')
+        print("WARNING: %s" % '\t'.join(line))
+        return(None)
+
+    # Create INFO field
+    INFO = "MAF_Hugo_Symbol=" + line[0] + ";MAF_ref_context=" + line[15].upper() + ";MAF_Genome_Change=" + line[14] + ";MAF_Variant_Type=" + variantType + ";MAF_Variant_Classification=" + mutType
+
+    # Final vcf line out
+    lineOut = [chrom, pos, rsid, refAllele, altAllele, QUAL, '.', INFO, "GT:AD:DP:VF", ".:.,.:.:.", sampleField]
+
+    print(lineOut)
+    return(lineOut)
+
+def processDEL(line):
+    pass
+
+def processINS(line):
+    pass
+
+def CreateVCFLine(line, errorFile):
+    line = line.rstrip('\n').split('\t')
+
+    # Genomic Position
+    chrom, pos, id = line[1], line[2], line[10]
+
+    # Get rs ID
+    rsid = line[10]
+    if rsid == '':
+        rsid = '.'
+    elif rsid.startswith("rs") == False:
+        print(line)
+        sys.exit("Problem in id column")
+
+    # Strand Information
+    strand = line[4]
+
+    # Variant Classification/Type (Type is SNP, INS, DEL, etc.)
+    mutType = line[5]
+    variantType = line[6]
+
+    # Create proper vcf formatted information
+    if mutType == '':
+        mutType = '.'
+    if variantType == '':
+        variantType = '.'
+
+    # Determine type of variant to continue processing.
+    if variantType=="SNP":
+        linetowrite = processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile)
+    elif variantType=="DEL":
+        linetowrite = processDEL(line)
+    elif variantType=="INS":
+        linetowrite = processINS(line)
+    else:
+        print("WARNING: Malformed MAF entry. %s"%('\t'.join(line)))
+        sys.exit()
+
+    return(linetowrite)
+
 
 def CreateHeader(ioObject, Options, tumorID, normalID):
     now = datetime.datetime.now()
@@ -131,8 +244,13 @@ def CreateHeader(ioObject, Options, tumorID, normalID):
     ioObject.write("##source=maf2vcf.py\n")
     ioObject.write("##reference=%s\n"%(Options.refGenome))
     ioObject.write("##sampleColumns=Normal.Tumor\n")
+    ioObject.write("##INFO=<ID=MAF_HUGO_Symbol,Number=1,Type=String,Description=\"HUGO Symbol in original MAF file.\">\n")
+    ioObject.write("##INFO=<ID=MAF_ref_context,Number=1,Type=String,Description=\"Reference context in original MAF file.\">\n")
+    ioObject.write("##INFO=<ID=MAF_Genome_Change,Number=1,Type=String,Description=\"Genome change in original MAF file.\">\n")
+    ioObject.write("##INFO=<ID=MAF_Variant_Type,Number=1,Type=String,Description=\"Variant type (SNP,INS,DEL) in original MAF file.\">\n")
+    ioObject.write("##INFO=<ID=MAF_Variant_Classification,Number=1,Type=String,Description=\"Variant Classification (if SNP) in original MAF file.\">\n")
     ioObject.write("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n")
-    ioObject.write("##FORMAT=<ID=AD,Number=R,Type=Integer,Description=\"Allelic depths of REF and ALT(s) in the order listed\">\n")
+    ioObject.write("##FORMAT=<ID=AD,Number=2,Type=Integer,Description=\"Allelic depths of REF and ALT(s) in the order listed\">\n")
     ioObject.write("##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Total read depth across this site\">\n")
     ioObject.write("##FORMAT=<ID=VF,Number=1,Type=Float,Description=\"Variant Allele Frequency.\">\n")
     ioObject.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t%s\t%s\n"%(normalID,tumorID))
@@ -151,6 +269,8 @@ def ProcessFile(Options):
             if i == 1:
                 toPullIDs = line.rstrip('\n').split('\t')
                 break
+            else:
+                header = line
             i+=1
     tumorID = toPullIDs[12]
     normalID = toPullIDs[13]
@@ -158,8 +278,12 @@ def ProcessFile(Options):
     count = 0
     i = 0
     with open(Options.maf, 'r') as inFile:
-        with open(Options.outDir + Options.maf.split('/')[len(Options.maf.split('/'))-1].replace('.maf','.vcf'), 'w') as outFile:
-            CreateHeader(outFile, Options, tumorID, normalID)
+        with open(Options.outDir + Options.maf.split('/')[len(Options.maf.split('/'))-1].replace('.maf','.vcf'), 'w') as outVCF:
+            errorFile = Options.outDir + Options.maf.split('/')[len(Options.maf.split('/')) - 1].replace('.maf', '.ignoredSNVs.maf')
+            with open(errorFile, 'w') as errorOut:
+                errorOut.write(header)
+
+            CreateHeader(outVCF, Options, tumorID, normalID)
             for line in inFile:
                 # UpdateProgress(i, n, "Processing Maf File")
                 if line.startswith('Hugo_Symbol	Chromosome	Start_position'):
@@ -167,73 +291,11 @@ def ProcessFile(Options):
                     i += 1
                 else:
                     i += 1
-                    line = line.rstrip('\n').split('\t')
-                    if len(line)==46:
-                        del line[11] # Ensures that the proper format is met by forcefully deleting the strange insterted \t
-                    chrom = line[1]
-                    pos = line[2]
-                    id = line[10]
-                    if id == '':
-                        id = '.'
-                    elif id.startswith("rs") == False:
-                        print(line)
-                        sys.exit("Problem in id column")
-                    strand = line[4]
-                    mutType = line[5]
-                    if mutType == '':
-                        mutType='.'
-                    variantType = line[6]
-                    if variantType == '':
-                        variantType = '.'
-                    ref = line[7]
-                    tAllele1 = line[8] # Normal Allele
-                    tAllele2 = line[9] # Alt Allele
-                    QUAL = line[41]
-                    if QUAL=='None' or QUAL=='NA' or QUAL=='':
-                        QUAL='.'
-                    if ref==tAllele1:
-                        altAllele=tAllele1
-                        refAllele=tAllele2
-                    else:
-                        altAllele=tAllele2
-                        refAllele=tAllele1
+                    linetoWrite = CreateVCFLine(line, errorFile)
 
-                    if strand=="+" or strand=="-":
-                        GT="0|1"
-                    else:
-                        GT="0/1"
+                    if linetoWrite is not None:
+                        outVCF.write('\t'.join(linetoWrite)+'\n')
 
-                    if variantType != 'INS' and variantType != 'DEL':
-                        ref_reads = line[38]
-                        alt_reads = line[37]
-                        if ref_reads=='NA' or alt_reads=='NA' and line[27]=='1':
-                            if ref_reads =='NA':
-                                ref_reads='.'
-                                total_reads=alt_reads
-                            else:
-                                alt_reads='.'
-                                total_reads=ref_reads
-                            GT="1|1"
-                            vaf = line[27]
-                            sampleField = ':'.join([GT, ','.join([ref_reads, alt_reads]), total_reads, vaf])
-                        elif ref_reads=='NA' or alt_reads=='NA' and line[27]=='NA':
-                            print("WARNING: %s" % '\t'.join(line))
-                        else:
-                            total_reads = str(int(ref_reads) + int(alt_reads))
-                            vaf = repr(round(int(alt_reads)/float(total_reads),4))
-
-                            sampleField = ':'.join([GT, ','.join([ref_reads, alt_reads]), total_reads, vaf])
-                    else:
-                        if variantType=="INS":
-                            print(line)
-                        pass
-                    if (ref != tAllele1 and ref != tAllele2) or strand != '+':
-                        print('\t'.join(line))
-                        sys.exit("Differences in Alleles or malformed strand information.")
-                    INFO = "Hugo_Symbol=" + line[0] + ";ref_context=" + line[14].upper() + ";Genome_Change=" + line[13] + ";Variant_Type=" + variantType + ";Variant_Classification=" + mutType
-                    # if variantType != 'INS' and variantType != 'DEL':
-                    lineOut = [chrom, pos, id, refAllele, altAllele, QUAL, '.', INFO, "GT:AD:DP:VF", "0|0:.:.:.",]
-                    # print(lineOut)
     print('')
 
 
