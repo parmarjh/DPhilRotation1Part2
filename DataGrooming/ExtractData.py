@@ -16,7 +16,7 @@ def OptionParsing():
     # parser.add_option('-i', '--inputFile', dest='inputMaf', default=None, help="Raw maf file.")
     # parser.add_option('-e', '--releasenotes', dest='releaseNotes', default=None, help="Release Data corresponding to MAF file.")
     parser.add_option('-s', '--skipmafstep', dest="skipParser", default=False, action="store_true", help="Skip over maf parsing (only if completed already.")
-    parser.add_option('-v', '--makevcf', dest="makeVCFs", default=True, action='store_false', help="Flat to turn off vcf conversion.")
+    parser.add_option('-v', '--makevcf', dest="makeVCFs", default=True, action='store_false', help="Flag to turn off vcf conversion.")
     parser.add_option('-r', '--ref_genome', dest="refGenome", default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa", help="Reference genome to be used for maf2vcf conversion.")
     (options, args) = parser.parse_args()
     return (options, parser)
@@ -167,8 +167,8 @@ def PrepareCancerClasses(Options, FilePath):
         allData.update({cancer:PCAWGData(FilePath, Options, cancer, dataFilePath)})
         count+=1
 
-        if count == 1:
-            sys.exit()
+        # if count == 1:
+        #     sys.exit()
 
     return(allData)
 
