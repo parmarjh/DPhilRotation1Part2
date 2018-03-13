@@ -60,3 +60,7 @@ python ./DataGrooming/maf2vcf.py --spotCheckMaf --input_maf=/Path/To/Your/PCAWG/
    - Two files will be created.
      - A *.ignoredSNVs.maf.gz file containing unprocessed variants (primarily due to insufficient information).
      - A *.sorted.vcf.gz file containing the processed variants.
+     
+     
+## Append copy number information...
+# Ignoring for now.
