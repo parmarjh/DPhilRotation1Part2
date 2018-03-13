@@ -139,7 +139,7 @@ class PCAWGData:
         for patient in self.patients:
             for tumour in self.patTumorMapping[patient]:
                 self.patientMafs.append("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour))
-                if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False or os.path.isfile("%s/%s.%s.head.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)):
+                if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False and os.path.isfile("%s/%s.%s.head.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
                     f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
                     for mut in self.patientMuts[tumour]:
                         f.write((mut + '\n').encode('UTF-8'))
