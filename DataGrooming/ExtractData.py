@@ -155,7 +155,7 @@ class PCAWGData:
         for file in self.patientMafs:
             outDir = '/'.join(file.split('/')[0:len(file.split('/')) - 1]) + "/"
 
-            if os.path.isfile(file.rstrip('.maf')+'.head.maf'):
+            if os.path.isfile(file.rstrip('.maf')+'.head.maf.gz'):
                 print("INFO: Running maf2vcf on %s" % (file.split('/')[len(file.split('/')) - 1]))
                 os.system("gzip -d %s" % (file.rstrip('.maf')+'.head.maf.gz'))
                 os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.rstrip('.maf') + '.head.maf', Options.refGenome, outDir))
