@@ -9,4 +9,4 @@ The steps for this process are outlined below.
 ## Steps
 1. [Convert PCAWG MAF files to VCF files.](DataGrooming.md)
 2. [Annotate VCF files for variant regions (allow for isoforms) Part 1](DataAnnotationExtraction.md)
-3. [Extract candidate sites for saturation mutagenesis. Part 2](DataAnnotationExtraction.md)
+3. [Extract candidate sites for saturation mutagenesis. Part 2](https://github.com/rschenck/DPhilRotation1Part2/blob/master/DataAnnotationExtraction.md#part-2)
