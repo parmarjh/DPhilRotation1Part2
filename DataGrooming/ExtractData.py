@@ -139,7 +139,7 @@ class PCAWGData:
         for patient in self.patients:
             for tumour in self.patTumorMapping[patient]:
                 self.patientMafs.append("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour))
-                if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
+                if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False or os.path.isfile("%s/%s.%s.head.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)):
                     f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
                     for mut in self.patientMuts[tumour]:
                         f.write((mut + '\n').encode('UTF-8'))
@@ -153,14 +153,22 @@ class PCAWGData:
         print("INFO: Creating VCF files.")
         headerFile = FilePath.rstrip("DataGrooming") + "PCAWGData/MafHeader.txt"
         for file in self.patientMafs:
-            outDir = '/'.join(file.split('/')[0:len(file.split('/'))-1]) + "/"
-            os.system("gzip -d %s" %(file))
-            file = file.rstrip('.gz')
-            os.system("cat %s %s > %s"%(headerFile, file, file.rstrip('.maf')+'.head.maf'))
-            os.system('rm %s'%(file))
-            print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
-            os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.rstrip('.maf')+'.head.maf', Options.refGenome, outDir))
-            os.system('gzip %s'%(file.rstrip('.maf')+'.head.maf'))
+            outDir = '/'.join(file.split('/')[0:len(file.split('/')) - 1]) + "/"
+
+            if os.path.isfile(file.rstrip('.maf')+'.head.maf'):
+                print("INFO: Running maf2vcf on %s" % (file.split('/')[len(file.split('/')) - 1]))
+                os.system("gzip -d %s" % (file.rstrip('.maf')+'.head.maf.gz'))
+                os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.rstrip('.maf') + '.head.maf', Options.refGenome, outDir))
+                os.system('gzip %s' % (file.rstrip('.maf') + '.head.maf'))
+            else:
+                os.system("gzip -d %s" %(file))
+                file = file.rstrip('.gz')
+                os.system("cat %s %s > %s"%(headerFile, file, file.rstrip('.maf')+'.head.maf'))
+                os.system('rm %s'%(file))
+                print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
+                os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.rstrip('.maf')+'.head.maf', Options.refGenome, outDir))
+                os.system('gzip %s'%(file.rstrip('.maf')+'.head.maf'))
+
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):
