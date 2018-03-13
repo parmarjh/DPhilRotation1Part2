@@ -28,6 +28,7 @@ bash ./SplitPCAWGData.sh
 python ./DataGrooming/ExtractData.py --ref_genome=/Path/To/Reference/Genome/Reference.fa
 ```
 1. This script will process each patients set of variants out of the maf files created for each cancer type above.
+   - Optionally, if you prefer to only examine one cancer type, specify the -l flag and feed the Cancer Directory name into the scipt using --cancer_name
 2. Then it will create a sorted, compressed vcf file.
 
 ## Alternatively running maf2vcf conversion alone.

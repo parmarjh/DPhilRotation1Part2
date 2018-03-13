@@ -17,11 +17,11 @@ import pandas as pd
 def OptionParsing():
     usage = 'usage: %prog [options] -f <*.h5>'
     parser = OptionParser(usage)
-    # parser.add_option('-i', '--inputFile', dest='inputMaf', default=None, help="Raw maf file.")
-    # parser.add_option('-e', '--releasenotes', dest='releaseNotes', default=None, help="Release Data corresponding to MAF file.")
     parser.add_option('-s', '--skipmafstep', dest="skipParser", default=False, action="store_true", help="Skip over maf parsing (only if completed already.")
     parser.add_option('-v', '--makevcf', dest="makeVCFs", default=True, action='store_false', help="Flag to turn off vcf conversion.")
     parser.add_option('-r', '--ref_genome', dest="refGenome", default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa", help="Reference genome to be used for maf2vcf conversion.")
+    parser.add_option('-l', '--onecancer', dest="oneCancer", default=False, action="store_true", help="Used in conjunction with --cancer_dir to only process one cancer type directory.")
+    parser.add_option('-c', '--cancer_name', dest='cancerName', default=None, help="Cancer directory name to be processed. List of names can be found in CancerTypes.txt")
     (options, args) = parser.parse_args()
     return (options, parser)
 
@@ -164,19 +164,27 @@ class PCAWGData:
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):
-    with open(FilePath.rstrip("DataGrooming")+"PCAWGData/CancerTypes.txt", 'r') as inFile:
-        cancerTypes = [line.rstrip('\n').replace("-","") for line in inFile.readlines()]
+    with open(FilePath.rstrip("DataGrooming") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
+        cancerTypes = [line.rstrip('\n') for line in inFile.readlines()]
 
     allData = {}
     count = 0
-    for cancer in cancerTypes:
-        print("INFO: Processing %s"%(cancer))
-        dataFilePath = "%sPCAWGData/Cancers/%s/%s-.snvs.indels.maf.gz"%(FilePath.rstrip("DataGrooming"), cancer, cancer)
-        allData.update({cancer:PCAWGData(FilePath, Options, cancer, dataFilePath)})
-        count+=1
+    if Options.oneCancer:
+        if Options.cancerName not in cancerTypes:
+            sys.exit("ERROR: Unrecognized cancer_name argument provided.")
+        print("INFO: Processing %s" % (Options.cancerName))
+        dataFilePath = "%sPCAWGData/Cancers/%s/%s-.snvs.indels.maf.gz" % (FilePath.rstrip("DataGrooming"), Options.cancerName, Options.cancerName)
+        allData.update({Options.cancerName: PCAWGData(FilePath, Options, Options.cancerName, dataFilePath)})
+    else:
+        for cancer in cancerTypes:
+            print("INFO: Processing %s"%(cancer))
+            dataFilePath = "%sPCAWGData/Cancers/%s/%s-.snvs.indels.maf.gz"%(FilePath.rstrip("DataGrooming"), cancer, cancer)
+            allData.update({cancer:PCAWGData(FilePath, Options, cancer, dataFilePath)})
+            count+=1
 
         # if count == 1:
         #     sys.exit()
+
 
     return(allData)
 
