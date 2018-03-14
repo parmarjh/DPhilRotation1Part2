@@ -160,7 +160,7 @@ class PCAWGData:
                 print("YAYAYAYAYAYAY")
                 print("INFO: Running maf2vcf on %s" % (file.split('/')[len(file.split('/')) - 1]))
                 os.system("gzip -d %s" % (file.replace('.maf.gz','.head.maf.gz')))
-                os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.rstrip('.maf.gz','.head.maf'), Options.refGenome, outDir))
+                os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.replace('.maf.gz','.head.maf'), Options.refGenome, outDir))
                 os.system('gzip %s' % (file.replace('.maf.gz','.head.maf')))
             elif os.path.isfile(file) and os.path.isfile(headerFile):
                 os.system("gzip -d %s" %(file))
