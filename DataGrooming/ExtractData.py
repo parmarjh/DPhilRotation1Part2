@@ -139,12 +139,13 @@ class PCAWGData:
         for patient in self.patients:
             for tumour in self.patTumorMapping[patient]:
                 self.patientMafs.append("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour))
-                if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False and os.path.isfile("%s/%s.%s.head.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
-                    f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
-                    for mut in self.patientMuts[tumour]:
-                        f.write((mut + '\n').encode('UTF-8'))
-                    f.close()
-                UpdateProgress(i, n, "%s.%s.maf"%(patient, tumour))
+                if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
+                    if os.path.isfile("%s/%s.%s.head.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
+                        f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
+                        for mut in self.patientMuts[tumour]:
+                            f.write((mut + '\n').encode('UTF-8'))
+                        f.close()
+                UpdateProgress(i, n, "%s.%s.maf.gz"%(patient, tumour))
                 i+=1
         print("")
         self.patientMuts = None # Get rid of patient muts, no longer needed. Clear memory of this information.
@@ -153,22 +154,22 @@ class PCAWGData:
         print("INFO: Creating VCF files.")
         headerFile = FilePath.rstrip("DataGrooming") + "PCAWGData/MafHeader.txt"
         for file in self.patientMafs:
-            outDir = '/'.join(file.split('/')[0:len(file.split('/')) - 1]) + "/"
+            outDir = '/'.join(file.split('/')[0:len(file.split('/'))-1])+'/'
 
-            if os.path.isfile(file.rstrip('.maf')+'.head.maf.gz'):
+            if os.path.isfile(file.replace('.maf.gz','.head.maf.gz')):
+                print("YAYAYAYAYAYAY")
                 print("INFO: Running maf2vcf on %s" % (file.split('/')[len(file.split('/')) - 1]))
-                os.system("gzip -d %s" % (file.rstrip('.maf')+'.head.maf.gz'))
-                os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.rstrip('.maf') + '.head.maf', Options.refGenome, outDir))
-                os.system('gzip %s' % (file.rstrip('.maf') + '.head.maf'))
-            else:
+                os.system("gzip -d %s" % (file.replace('.maf.gz','.head.maf.gz')))
+                os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.rstrip('.maf.gz','.head.maf'), Options.refGenome, outDir))
+                os.system('gzip %s' % (file.replace('.maf.gz','.head.maf')))
+            elif os.path.isfile(file) and os.path.isfile(headerFile):
                 os.system("gzip -d %s" %(file))
-                file = file.rstrip('.gz')
-                os.system("cat %s %s > %s"%(headerFile, file, file.rstrip('.maf')+'.head.maf'))
-                os.system('rm %s'%(file))
+                os.system("cat %s %s > %s"%(headerFile, file.replace('.maf.gz','.maf'), file.replace('.maf.gz','.head.maf')))
+                os.system('rm %s'%(file.replace('.maf.gz','.maf')))
                 print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
-                os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.rstrip('.maf')+'.head.maf', Options.refGenome, outDir))
-                os.system('gzip %s'%(file.rstrip('.maf')+'.head.maf'))
-
+                # os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.replace('.maf.gz','head.maf'), Options.refGenome, outDir))
+                if os.path.isfile(file.replace('.maf.gz','.head.maf')):
+                    os.system('gzip %s'%(file.replace('.maf.gz','.head.maf')))
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):
@@ -192,7 +193,6 @@ def PrepareCancerClasses(Options, FilePath):
 
         # if count == 1:
         #     sys.exit()
-
 
     return(allData)
 
