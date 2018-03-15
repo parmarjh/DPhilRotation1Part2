@@ -12,6 +12,7 @@ import time
 import subprocess
 from functools import wraps
 import pandas as pd
+import glob
 
 
 def OptionParsing():
@@ -22,6 +23,7 @@ def OptionParsing():
     parser.add_option('-r', '--ref_genome', dest="refGenome", default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa", help="Reference genome to be used for maf2vcf conversion.")
     parser.add_option('-l', '--onecancer', dest="oneCancer", default=False, action="store_true", help="Used in conjunction with --cancer_dir to only process one cancer type directory.")
     parser.add_option('-c', '--cancer_name', dest='cancerName', default=None, help="Cancer directory name to be processed. List of names can be found in CancerTypes.txt")
+    parser.add_option('-a', '--repair_struct', dest='repair_struct', default=False, action="store_true", help="Verifies process by checking for invalid file names. This will run separately from the rest of the script.")
     (options, args) = parser.parse_args()
     return (options, parser)
 
@@ -156,19 +158,20 @@ class PCAWGData:
         for file in self.patientMafs:
             outDir = '/'.join(file.split('/')[0:len(file.split('/'))-1])+'/'
 
-            if os.path.isfile(file.replace('.maf.gz','.head.maf.gz')):
-                print("INFO: Running maf2vcf on %s" % (file.split('/')[len(file.split('/')) - 1]))
-                os.system("gzip -d %s" % (file.replace('.maf.gz','.head.maf.gz')))
-                os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.replace('.maf.gz','.head.maf'), Options.refGenome, outDir))
-                os.system('gzip %s' % (file.replace('.maf.gz','.head.maf')))
-            elif os.path.isfile(file) and os.path.isfile(headerFile):
-                os.system("gzip -d %s" %(file))
-                os.system("cat %s %s > %s"%(headerFile, file.replace('.maf.gz','.maf'), file.replace('.maf.gz','.head.maf')))
-                os.system('rm %s'%(file.replace('.maf.gz','.maf')))
-                print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
-                # os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.replace('.maf.gz','head.maf'), Options.refGenome, outDir))
-                if os.path.isfile(file.replace('.maf.gz','.head.maf')):
-                    os.system('gzip %s'%(file.replace('.maf.gz','.head.maf')))
+            if os.path.isfile(file.replace('.maf.gz','.sorted.vcf.gz'))==False:
+                if os.path.isfile(file.replace('.maf.gz','.head.maf.gz')):
+                    print("INFO: Running maf2vcf on %s" % (file.split('/')[len(file.split('/')) - 1]))
+                    os.system("gzip -d %s" % (file.replace('.maf.gz','.head.maf.gz')))
+                    os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.replace('.maf.gz','.head.maf'), Options.refGenome, outDir))
+                    os.system('gzip %s' % (file.replace('.maf.gz','.head.maf')))
+                elif os.path.isfile(file) and os.path.isfile(headerFile):
+                    os.system("gzip -d %s" %(file))
+                    os.system("cat %s %s > %s"%(headerFile, file.replace('.maf.gz','.maf'), file.replace('.maf.gz','.head.maf')))
+                    os.system('rm %s'%(file.replace('.maf.gz','.maf')))
+                    print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
+                    os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.replace('.maf.gz','head.maf'), Options.refGenome, outDir))
+                    if os.path.isfile(file.replace('.maf.gz','.head.maf')):
+                        os.system('gzip %s'%(file.replace('.maf.gz','.head.maf')))
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):
@@ -177,6 +180,9 @@ def PrepareCancerClasses(Options, FilePath):
 
     allData = {}
     count = 0
+
+    # TODO Implement repair function!!!!!! with a passover to re-do vcf files that weren't created!!!!!!!!
+
     if Options.oneCancer:
         if Options.cancerName not in cancerTypes:
             sys.exit("ERROR: Unrecognized cancer_name argument provided.")
@@ -190,10 +196,48 @@ def PrepareCancerClasses(Options, FilePath):
             allData.update({cancer:PCAWGData(FilePath, Options, cancer, dataFilePath)})
             count+=1
 
-        # if count == 1:
-        #     sys.exit()
-
     return(allData)
+
+@fn_timer
+def RepairStruct(Options, FilePath):
+    print("INFO: Repairing file structure and improperly formed vcf files.")
+    with open(FilePath.rstrip("DataGrooming") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
+        cancerTypes = [line.rstrip('\n') for line in inFile.readlines()]
+
+    allData = {}
+    if Options.oneCancer:
+        if Options.cancerName not in cancerTypes:
+            sys.exit("ERROR: Unrecognized cancer_name argument provided.")
+        else:
+            filesDir = FilePath.replace("DataGrooming","PCAWGData/Cancers/%s"%(Options.cancerName)) + "/"
+            allFiles = [fileName for fileName in glob.glob(filesDir + "*") if fileName[len(fileName)-4:] != '.csv' and fileName.split('/')[len(fileName.split('/'))-1] != "%s-.snvs.indels.maf.gz"%(Options.cancerName)]
+            improper = {'delete':[],'printDelete':[]}
+            for f in allFiles:
+                fileName = f.split('/')[len(f.split('/'))-1]
+                id = '.'.join(f.split('/')[len(f.split('/'))-1].split('.')[0:2])
+                if fileName[len(fileName)-3:] != '.gz':
+                    improper['printDelete'].append(f)
+                elif len(id.split('.')[1]) != 36:
+                    improper['delete'].append(f)
+                else:
+                    pass
+        # Delete those that are outright wrong...shouldn't be necessary after first time due to errors during dev
+        for fileName in improper['delete']:
+            os.system("rm %s"%(fileName))
+        for fileName in improper['printDelete']:
+            print("WARNING: Improperly processed file %s"%(fileName))
+            os.system("rm %s"%(fileName))
+
+        print("INFO: Reprocessing %s" % (Options.cancerName))
+        dataFilePath = "%sPCAWGData/Cancers/%s/%s-.snvs.indels.maf.gz" % (
+        FilePath.rstrip("DataGrooming"), Options.cancerName, Options.cancerName)
+        allData.update({Options.cancerName: PCAWGData(FilePath, Options, Options.cancerName, dataFilePath)})
+
+    else:
+        for cancer in cancerTypes:
+            pass
+
+
 
 if __name__=="__main__":
     FilePath = os.path.dirname(os.path.abspath(__file__))
@@ -203,6 +247,12 @@ if __name__=="__main__":
 
     hg19GenomeSize = 3137161264 # Taken from adding up hg19 chromosome sizes.
 
-    allData = PrepareCancerClasses(Options, FilePath)
+    if Options.repair_struct==False:
+        allData = PrepareCancerClasses(Options, FilePath)
+    elif Options.repair_struct:
+        # Check for proper data filenames.
+        RepairStruct(Options, FilePath)
+    else:
+        print('Error: Nothing to be done.')
 
     print("INFO: Process Complete.")

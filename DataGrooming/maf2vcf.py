@@ -390,16 +390,24 @@ def CreateVCFLine(line, errorFile, Options):
         variantType = '.'
 
     # Determine type of variant to continue processing.
+    linetowrite = None
     if variantType=="SNP":
         linetowrite = processSNP(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options)
     elif variantType=="DEL":
         linetowrite = processDEL(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options)
     elif variantType=="INS":
         linetowrite = processINS(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, Options)
-    else:
+    elif variantType=="TNP" or variantType=="ONP":
+        with open(errorFile, 'a') as errerOut:
+            errerOut.write('\t'.join(line)+'\n')
+    else: # This may seem duplicitious, but I explicityly want to know as much of what I'm choosing to filter out as possible...
         if Options.verbose:
             print("WARNING: Malformed MAF entry. %s"%('\t'.join(line)))
-        sys.exit("ERROR: Malformed MAF entry.")
+        print('')
+        with open(errorFile, 'a') as errerOut:
+            errerOut.write('\t'.join(line)+'\n')
+        # print(line)
+        # sys.exit("ERROR: Malformed MAF entry.")
 
     return(linetowrite)
 
