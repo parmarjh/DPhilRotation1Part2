@@ -228,15 +228,15 @@ def RepairStruct(Options, FilePath):
             print("WARNING: Improperly processed file %s"%(fileName))
             os.system("rm %s"%(fileName))
 
-        print("INFO: Reprocessing %s" % (Options.cancerName))
-        dataFilePath = "%sPCAWGData/Cancers/%s/%s-.snvs.indels.maf.gz" % (
-        FilePath.rstrip("DataGrooming"), Options.cancerName, Options.cancerName)
-        allData.update({Options.cancerName: PCAWGData(FilePath, Options, Options.cancerName, dataFilePath)})
-
+        if len(improper['delete']) == 0 and len(improper['printDelete']) == 0:
+            print("INFO: No files or file structures to repair! Yay!")
+        else:
+            print("INFO: Reprocessing %s" % (Options.cancerName))
+            dataFilePath = "%sPCAWGData/Cancers/%s/%s-.snvs.indels.maf.gz" % (
+            FilePath.rstrip("DataGrooming"), Options.cancerName, Options.cancerName)
+            allData.update({Options.cancerName: PCAWGData(FilePath, Options, Options.cancerName, dataFilePath)})
     else:
-        for cancer in cancerTypes:
-            pass
-
+        sys.exit("ERROR: --repair_struct can only be used if you specify a cancer type to repair.")
 
 
 if __name__=="__main__":
