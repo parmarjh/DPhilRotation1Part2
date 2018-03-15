@@ -18,6 +18,7 @@ def OptionParsing():
     usage = 'usage: %prog [options] -f <*.h5>'
     parser = OptionParser(usage)
     parser.add_option('-r', '--ref_genome', dest="refGenome", default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa", help="Reference genome to be used for maf2vcf conversion.")
+
     (options, args) = parser.parse_args()
     return (options, parser)
 
@@ -62,11 +63,14 @@ def UpdateProgressGetN(fileName):
         pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
     return(int(pipe.read().decode("utf-8").lstrip(" ").split(" ")[0]))
 
+def ProcessFiles():
+
+
 def main():
     FilePath = os.path.dirname(os.path.abspath(__file__))
     now = datetime.datetime.now()
     (Options, Parser) = OptionParsing()
-    allOutDir = FilePath.rstrip("DataGrooming") + "PCAWGData"
+    allOutDir = FilePath.replace("DataGrooming","PCAWGData/")
 
 if __name__=="__main__":
     main()

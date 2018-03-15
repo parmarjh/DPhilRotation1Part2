@@ -419,7 +419,7 @@ def CreateHeader(ioObject, Options, tumorID, normalID):
     ioObject.write("##source=maf2vcf.py\n")
     ioObject.write("##reference=%s\n"%(Options.refGenome))
     ioObject.write("##sampleColumns=Normal.Tumor\n")
-    ioObject.write("##INFO=<ID=MAF_HUGO_Symbol,Number=1,Type=String,Description=\"HUGO Symbol in original MAF file.\">\n")
+    ioObject.write("##INFO=<ID=MAF_Hugo_Symbol,Number=1,Type=String,Description=\"HUGO Symbol in original MAF file.\">\n")
     ioObject.write("##INFO=<ID=MAF_ref_context,Number=1,Type=String,Description=\"Reference context in original MAF file.\">\n")
     ioObject.write("##INFO=<ID=MAF_Genome_Change,Number=1,Type=String,Description=\"Genome change in original MAF file.\">\n")
     ioObject.write("##INFO=<ID=MAF_Variant_Type,Number=1,Type=String,Description=\"Variant type (SNP,INS,DEL) in original MAF file.\">\n")
