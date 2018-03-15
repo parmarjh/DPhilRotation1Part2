@@ -26,6 +26,12 @@ bash ./SplitPCAWGData.sh
 ```bash
 # From the github repository directory
 python ./DataGrooming/ExtractData.py --ref_genome=/Path/To/Reference/Genome/Reference.fa
+
+# Optionally this can be ran with an individual cancer sub-directory
+python ./DataGrooming/ExtractData.py --ref_genome=/Path/To/Reference/Genome/Reference.fa -l --cancer_name=MELA
+
+# If errors occur along the way or to verify the scripts outputs run --repair_struct with -l and --cancer_name
+python ./DataGrooming/ExtractData.py --ref_genome=/Path/To/Reference/Genome/Reference.fa --repair_struct -l --cancer_name=MELA
 ```
 1. This script will process each patients set of variants out of the maf files created for each cancer type above.
    - Optionally, if you prefer to only examine one cancer type, specify the -l flag and feed the Cancer Directory name into the scipt using --cancer_name
