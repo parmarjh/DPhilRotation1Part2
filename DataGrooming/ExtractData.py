@@ -169,7 +169,7 @@ class PCAWGData:
                     os.system("cat %s %s > %s"%(headerFile, file.replace('.maf.gz','.maf'), file.replace('.maf.gz','.head.maf')))
                     os.system('rm %s'%(file.replace('.maf.gz','.maf')))
                     print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
-                    os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.replace('.maf.gz','head.maf'), Options.refGenome, outDir))
+                    os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.replace('.maf.gz','.head.maf'), Options.refGenome, outDir))
                     if os.path.isfile(file.replace('.maf.gz','.head.maf')):
                         os.system('gzip %s'%(file.replace('.maf.gz','.head.maf')))
 
