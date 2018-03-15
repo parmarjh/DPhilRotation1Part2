@@ -17,8 +17,13 @@ import pandas as pd
 def OptionParsing():
     usage = 'usage: %prog [options] -f <*.h5>'
     parser = OptionParser(usage)
-    parser.add_option('-r', '--ref_genome', dest="refGenome", default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa", help="Reference genome to be used for maf2vcf conversion.")
-
+    parser.add_option('-r', '--ref_genome', dest="refGenome",
+                      default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa",
+                      help="Reference genome to be used for maf2vcf conversion.")
+    parser.add_option('-l', '--onecancer', dest="oneCancer", default=False, action="store_true",
+                      help="Used in conjunction with --cancer_dir to only process one cancer type directory.")
+    parser.add_option('-c', '--cancer_name', dest='cancerName', default=None,
+                      help="Cancer directory name to be processed. List of names can be found in CancerTypes.txt")
     (options, args) = parser.parse_args()
     return (options, parser)
 
@@ -63,14 +68,27 @@ def UpdateProgressGetN(fileName):
         pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
     return(int(pipe.read().decode("utf-8").lstrip(" ").split(" ")[0]))
 
-def ProcessFiles():
+def AddRSids():
+    # TODO Will add this at a later point. Not needed right now.
 
+def AnnotateRegions():
+    # TODO this is where I annotate with the ENEMBL transcript inormation
+
+def ProcessFiles(Options, FilePath, allOutDir):
+    print("INFO: Repairing file structure and improperly formed vcf files.")
+    with open(FilePath.rstrip("DataGrooming") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
+        cancerTypes = [line.rstrip('\n') for line in inFile.readlines()]
+
+    
+    allData = {}
 
 def main():
     FilePath = os.path.dirname(os.path.abspath(__file__))
     now = datetime.datetime.now()
     (Options, Parser) = OptionParsing()
     allOutDir = FilePath.replace("DataGrooming","PCAWGData/")
+
+    ProcessFiles(Options, FilePath, allOutDir)
 
 if __name__=="__main__":
     main()
