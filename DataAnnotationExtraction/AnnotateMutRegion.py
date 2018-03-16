@@ -70,16 +70,18 @@ def UpdateProgressGetN(fileName):
 
 def AddRSids():
     # TODO Will add this at a later point. Not needed right now.
+    pass
 
 def AnnotateRegions():
     # TODO this is where I annotate with the ENEMBL transcript inormation
+    pass
 
 def ProcessFiles(Options, FilePath, allOutDir):
     print("INFO: Repairing file structure and improperly formed vcf files.")
     with open(FilePath.rstrip("DataGrooming") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
         cancerTypes = [line.rstrip('\n') for line in inFile.readlines()]
 
-    
+
     allData = {}
 
 def main():

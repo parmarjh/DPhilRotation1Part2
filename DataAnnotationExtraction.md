@@ -20,9 +20,7 @@ java -jar snpEff.jar download -v GRCh37.75
 
 # Part 1
 ```bash
-# Step 1, preparing the data for snpEFF
-python ./DataAnnotationExtraction/Prepare_snpEFF_information.py
-
+# Place holder
 
 ```
 1. Prepares snpEFF to annotate regulatory and other regions.
@@ -33,3 +31,18 @@ python ./DataAnnotationExtraction/Prepare_snpEFF_information.py
 # Placeholder
 ```
 1. Extracts noncoding mutations to construct candidate sites and proper file for saturation mutagenesis.
+
+
+
+# No Longer Doing this for now:
+```bash
+# Will adjust later to be a different script.
+# Step 1, preparing the data for snpEFF
+python ./DataAnnotationExtraction/Prepare_snpEFF_information.py
+
+# Step 2, build custom regulatory annotation database
+# Unable to complete locally due to initial heap size, Please see any notes about this step here: 
+# http://snpeff.sourceforge.net/SnpEff_manual.html#databasesNc
+cd /path/to/snpEFF/
+java -Xmx40G -jar snpEff.jar build -v -onlyReg GRCh37.75
+```

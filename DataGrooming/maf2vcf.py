@@ -127,7 +127,7 @@ def SpotCheckProperReference(mafFile, Options, fileLength):
                 ref = line[7]
                 mutType = line[5]
                 variantClass = line[6]
-                if variantClass != "INS":
+                if variantClass != "INS" and variantClass != "TNP" and variantClass !="ONP":
                     toContinue = SamtoolsFaidx(Options.refGenome, genomicPos, ref)
                 if count == len(a):
                     print('')
