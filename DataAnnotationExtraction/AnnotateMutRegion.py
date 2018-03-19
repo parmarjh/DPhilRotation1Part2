@@ -87,7 +87,17 @@ class CancerData:
         self.cancer = CancerType
         self.vcfParentDir = vcfFilePath
         self.vcfFiles = glob.glob(self.vcfParentDir + "*.sorted.vcf.gz")
-        self.AnnotateRegions(snpEff)
+        self.AnnotateVCFs(snpEff)
+        print('INFO: Annotations Completed.')
+
+    def AnnotateVCFs(self, snpEff):
+        count = 0
+        for vcf in self.vcfFiles:
+            outPath = vcf.split('/')[0:len(vcf.split('/'))-1]
+            outputFile = '/'.join(outPath) + '/' + vcf.split('/')[len(vcf.split('/'))-1].replace('.vcf.gz', '.ann.vcf')
+            UpdateProgress(count, len(self.vcfFiles), "INFO: Annotating vcf file.")
+            self.AnnotateRegions(snpEff, vcf, outputFile)
+            count += 1
 
     def AddRSids(self):
         # TODO Will add this at a later point. Not needed right now.
@@ -97,7 +107,7 @@ class CancerData:
         os.system('java -Xmx10G -jar %s -t -noStats GRCh37.75 %s > %s'%(snpEff['snpeff'], inputFile, outputFile))
 
 @fn_timer
-def ProcessFiles(Options, FilePath, Config):
+def ProcessFiles(Options, FilePath, snpEFF):
     print("INFO: Begging the process...")
     with open(FilePath.rstrip("DataAnnotationExtraction") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
         cancerTypes = [line.rstrip('\n') for line in inFile.readlines()]
@@ -108,12 +118,12 @@ def ProcessFiles(Options, FilePath, Config):
             sys.exit("ERROR: Unrecognized cancer_name argument provided.")
         print("INFO: Processing %s" % (Options.cancerName))
         pathToVCFs = "%sPCAWGData/Cancers/%s/" % (FilePath.rstrip("DataAnnotationExtraction"), Options.cancerName)
-        allData.update({Options.cancerName: CancerData(FilePath, Options, Options.cancerName, pathToVCFs)})
+        allData.update({Options.cancerName: CancerData(FilePath, Options, Options.cancerName, pathToVCFs, snpEFF)})
     else:
         for cancer in cancerTypes:
             print("INFO: Processing %s"%(cancer))
             pathToVCFs = "%sPCAWGData/Cancers/%s/"%(FilePath.rstrip("DataAnnotationExtraction"), cancer)
-            allData.update({cancer:CancerData(FilePath, Options, cancer, pathToVCFs)})
+            allData.update({cancer:CancerData(FilePath, Options, cancer, pathToVCFs, snpEFF)})
 
 
 def main():
@@ -125,7 +135,7 @@ def main():
     Config.read(localpath + "usr_paths.ini")
     snpEFF = ConfigSectionMap(Config.sections()[0], Config)  # get snpEFF path
 
-    ProcessFiles(Options, FilePath, Config, snpEFF)
+    ProcessFiles(Options, FilePath, snpEFF)
 
 if __name__=="__main__":
     main()
