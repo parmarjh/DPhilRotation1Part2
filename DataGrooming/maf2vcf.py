@@ -117,7 +117,7 @@ def SpotCheckProperReference(mafFile, Options, fileLength):
     i = 0
     count = 0
     for line in mafFile:
-        if i != 0:
+        if i != 0 and line.startswith('Hugo_Symbol	Chromosome	Start_position') == False:
             checkIt = len([k for k in a if k==i])
             if checkIt==1:
                 UpdateProgress(count, len(a), "INFO: Verifying maf file")
@@ -132,9 +132,16 @@ def SpotCheckProperReference(mafFile, Options, fileLength):
                 if count == len(a):
                     print('')
                     return(toContinue)
+            else:
+                sys.exit("Problem here")
         elif i != 0 and line.startswith('Hugo_Symbol	Chromosome	Start_position') == False:
             print("")
             print("ERROR: No header found in maf file.")
+        elif line.startswith('Hugo_Symbol	Chromosome	Start_position') == True:
+            toContinue = True
+        else:
+
+            sys.exit("What the fuck")
         i+=1
     print('')
     return(toContinue)
@@ -345,7 +352,8 @@ def processINS(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, 
         sys.exit("ERROR: Problem processing INS %s" % ('\t'.join(line)))
 
     sampleField = ':'.join([GT, ','.join([ref_reads, alt_reads]), total_reads, vaf])
-
+    print(line)
+    print(line[44])
     # Create INFO field
     INFO = "MAF_Hugo_Symbol=" + line[0] + ";MAF_ref_context=" + line[15].upper() + ";MAF_Genome_Change=" + line[
         14] + ";MAF_Variant_Type=" + variantType + ";MAF_Variant_Classification=" + mutType + ";DCC_Project_Code=" + \

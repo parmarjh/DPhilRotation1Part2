@@ -11,8 +11,8 @@ Convert MAF files to VCF files and append CNV information (if needed).
 
 ## Preparing PCAWG Data for Analysis
 ```bash
-cd ./PCAWGData # Not on github
-bash ./SplitPCAWGData.sh
+cd ./PCAWGData # Not on github with data
+python ./SplitPCAWGData.py
 ```
 1. This does the following:
    - Reads from the concatenated, compressed .maf.gz file and parses the mutation data into a 
