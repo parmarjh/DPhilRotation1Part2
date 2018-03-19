@@ -20,12 +20,10 @@ java -jar snpEff.jar download -v GRCh37.75
 
 # Part 1
 ```bash
-# Place holder
-
+python ./DataAnnotationExtraction/AnnotateMutRegion.py
 ```
-1. Prepares snpEFF to annotate regulatory and other regions.
-   - To save time, for now, only the first biological replicates are used in snpEFF if a replicate exists.
-2. Appends up to date rs IDs across all sites.
+1. Annotates variants using snpEFF
+2. Appends up to date rs IDs across all sites (CURRENTLY DISABLED).
 # Part 2
 ```bash
 # Placeholder

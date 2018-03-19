@@ -6,10 +6,13 @@ import sys
 import os
 import glob
 from optparse import OptionParser
-import datetime
 import time
 import subprocess
 from functools import wraps
+try:
+    import ConfigParser as configparser # for python 2
+except:
+    import configparser # for python 3
 
 def OptionParsing():
     usage = 'usage: %prog [options] -f <*.h5>'
@@ -23,6 +26,19 @@ def OptionParsing():
                       help="Cancer directory name to be processed. List of names can be found in CancerTypes.txt")
     (options, args) = parser.parse_args()
     return (options, parser)
+
+def ConfigSectionMap(section, Config):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                print("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return(dict1)
 
 def fn_timer(function):
     '''
@@ -66,23 +82,22 @@ def UpdateProgressGetN(fileName):
     return(int(pipe.read().decode("utf-8").lstrip(" ").split(" ")[0]))
 
 class CancerData:
-    def __init__(self, FilePath, Options, CancerType, vcfFilePath):
+    def __init__(self, FilePath, Options, CancerType, vcfFilePath, snpEff):
         self.FilePath = FilePath
         self.cancer = CancerType
         self.vcfParentDir = vcfFilePath
         self.vcfFiles = glob.glob(self.vcfParentDir + "*.sorted.vcf.gz")
-        self.AnnotateRegions()
+        self.AnnotateRegions(snpEff)
 
     def AddRSids(self):
         # TODO Will add this at a later point. Not needed right now.
         pass
 
-    def AnnotateRegions(self):
-        # TODO this is where I annotate with the ENSEMBL transcript inormation
-        pass
+    def AnnotateRegions(self, snpEff, inputFile, outputFile):
+        os.system('java -Xmx10G -jar %s -t -noStats GRCh37.75 %s > %s'%(snpEff['snpeff'], inputFile, outputFile))
 
 @fn_timer
-def ProcessFiles(Options, FilePath, allOutDir):
+def ProcessFiles(Options, FilePath, Config):
     print("INFO: Begging the process...")
     with open(FilePath.rstrip("DataAnnotationExtraction") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
         cancerTypes = [line.rstrip('\n') for line in inFile.readlines()]
@@ -103,11 +118,14 @@ def ProcessFiles(Options, FilePath, allOutDir):
 
 def main():
     FilePath = os.path.dirname(os.path.abspath(__file__))
-    now = datetime.datetime.now()
-    (Options, Parser) = OptionParsing()
-    allOutDir = FilePath.replace("DataGrooming","PCAWGData/")
+    localpath = os.path.abspath(__file__).rstrip('AnnotateMutRegion.py')  # path to scripts working directory
 
-    ProcessFiles(Options, FilePath, allOutDir)
+    (Options, Parser) = OptionParsing()
+    Config = configparser.ConfigParser()
+    Config.read(localpath + "usr_paths.ini")
+    snpEFF = ConfigSectionMap(Config.sections()[0], Config)  # get snpEFF path
+
+    ProcessFiles(Options, FilePath, Config, snpEFF)
 
 if __name__=="__main__":
     main()
