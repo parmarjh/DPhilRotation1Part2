@@ -118,22 +118,25 @@ def SpotCheckProperReference(mafFile, Options, fileLength):
     count = 0
     for line in mafFile:
         if i != 0 and line.startswith('Hugo_Symbol	Chromosome	Start_position') == False:
-            checkIt = len([k for k in a if k==i])
-            if checkIt==1:
-                UpdateProgress(count, len(a), "INFO: Verifying maf file")
-                count+=1
-                line = line.rstrip('\n').split('\t')
-                genomicPos = line[1] + ":" + line[2] + "-" + line[3]
-                ref = line[7]
-                mutType = line[5]
-                variantClass = line[6]
-                if variantClass != "INS" and variantClass != "TNP" and variantClass !="ONP":
-                    toContinue = SamtoolsFaidx(Options.refGenome, genomicPos, ref)
-                if count == len(a):
-                    print('')
-                    return(toContinue)
-            else:
-                sys.exit("Problem here")
+            # checkIt = len([k for k in a if k==i])
+            # if checkIt==1:
+            UpdateProgress(count, len(a), "INFO: Verifying maf file")
+            count+=1
+            line = line.rstrip('\n').split('\t')
+            genomicPos = line[1] + ":" + line[2] + "-" + line[3]
+            ref = line[7]
+            mutType = line[5]
+            variantClass = line[6]
+            if variantClass != "INS" and variantClass != "TNP" and variantClass !="ONP":
+                toContinue = SamtoolsFaidx(Options.refGenome, genomicPos, ref)
+            if count == len(a):
+                print('')
+                return(toContinue)
+            # else:
+            #     print(checkIt)
+            #     print(line)
+            #     print([k for k in a])
+            #     sys.exit("Problem here")
         elif i != 0 and line.startswith('Hugo_Symbol	Chromosome	Start_position') == False:
             print("")
             print("ERROR: No header found in maf file.")
@@ -352,8 +355,7 @@ def processINS(line, chrom, pos, rsid, mutType, variantType, strand, errorFile, 
         sys.exit("ERROR: Problem processing INS %s" % ('\t'.join(line)))
 
     sampleField = ':'.join([GT, ','.join([ref_reads, alt_reads]), total_reads, vaf])
-    print(line)
-    print(line[44])
+
     # Create INFO field
     INFO = "MAF_Hugo_Symbol=" + line[0] + ";MAF_ref_context=" + line[15].upper() + ";MAF_Genome_Change=" + line[
         14] + ";MAF_Variant_Type=" + variantType + ";MAF_Variant_Classification=" + mutType + ";DCC_Project_Code=" + \

@@ -140,17 +140,15 @@ class PCAWGData:
         i=0
         for patient in self.patients:
             for tumour in self.patTumorMapping[patient]:
-                if patient == "DO38779" and tumour=="d8d5585d-32cd-4ac4-b410-a4122a17a558":  # TO REMOVE FUCKER
-
-                    self.patientMafs.append("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour))
-                    if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
-                        if os.path.isfile("%s/%s.%s.head.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
-                            f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
-                            for mut in self.patientMuts[tumour]:
-                                f.write((mut + '\n').encode('UTF-8'))
-                            f.close()
-                UpdateProgress(i, n, "%s.%s.maf.gz"%(patient, tumour))
-                i+=1
+                self.patientMafs.append("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour))
+                if os.path.isfile("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
+                    if os.path.isfile("%s/%s.%s.head.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour)) == False:
+                        f  = gzip.open("%s/%s.%s.maf.gz"%(self.mafFile.split('/%s-'%(self.CancerType))[0],patient, tumour), 'wb')
+                        for mut in self.patientMuts[tumour]:
+                            f.write((mut + '\n').encode('UTF-8'))
+                        f.close()
+            UpdateProgress(i, n, "%s.%s.maf.gz"%(patient, tumour))
+            i+=1
         print("")
         self.patientMuts = None # Get rid of patient muts, no longer needed. Clear memory of this information.
 
@@ -160,21 +158,20 @@ class PCAWGData:
         for file in self.patientMafs:
             outDir = '/'.join(file.split('/')[0:len(file.split('/'))-1])+'/'
 
-            if file.split('/')[len(file.split('/'))-1] == "DO38779.d8d5585d-32cd-4ac4-b410-a4122a17a558.maf.gz":    # TO REMOVE FUCKER
-                if os.path.isfile(file.replace('.maf.gz','.sorted.vcf.gz'))==False:
-                    if os.path.isfile(file.replace('.maf.gz','.head.maf.gz')):
-                        print("INFO: Running maf2vcf on %s" % (file.split('/')[len(file.split('/')) - 1]))
-                        os.system("gzip -d %s" % (file.replace('.maf.gz','.head.maf.gz')))
-                        os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.replace('.maf.gz','.head.maf'), Options.refGenome, outDir))
-                        os.system('gzip %s' % (file.replace('.maf.gz','.head.maf')))
-                    elif os.path.isfile(file) and os.path.isfile(headerFile):
-                        os.system("gzip -d %s" %(file))
-                        os.system("cat %s %s > %s"%(headerFile, file.replace('.maf.gz','.maf'), file.replace('.maf.gz','.head.maf')))
-                        os.system('rm %s'%(file.replace('.maf.gz','.maf')))
-                        print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
-                        os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.replace('.maf.gz','.head.maf'), Options.refGenome, outDir))
-                        if os.path.isfile(file.replace('.maf.gz','.head.maf')):
-                            os.system('gzip %s'%(file.replace('.maf.gz','.head.maf')))
+            if os.path.isfile(file.replace('.maf.gz','.sorted.vcf.gz'))==False:
+                if os.path.isfile(file.replace('.maf.gz','.head.maf.gz')):
+                    print("INFO: Running maf2vcf on %s" % (file.split('/')[len(file.split('/')) - 1]))
+                    os.system("gzip -d %s" % (file.replace('.maf.gz','.head.maf.gz')))
+                    os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s' % (FilePath, file.replace('.maf.gz','.head.maf'), Options.refGenome, outDir))
+                    os.system('gzip %s' % (file.replace('.maf.gz','.head.maf')))
+                elif os.path.isfile(file) and os.path.isfile(headerFile):
+                    os.system("gzip -d %s" %(file))
+                    os.system("cat %s %s > %s"%(headerFile, file.replace('.maf.gz','.maf'), file.replace('.maf.gz','.head.maf')))
+                    os.system('rm %s'%(file.replace('.maf.gz','.maf')))
+                    print("INFO: Running maf2vcf on %s"%(file.split('/')[len(file.split('/'))-1]))
+                    os.system('python %s/maf2vcf.py --spotCheckMaf --input_maf %s --ref_genome %s --output_dir %s'%(FilePath, file.replace('.maf.gz','.head.maf'), Options.refGenome, outDir))
+                    if os.path.isfile(file.replace('.maf.gz','.head.maf')):
+                        os.system('gzip %s'%(file.replace('.maf.gz','.head.maf')))
 
 @fn_timer
 def PrepareCancerClasses(Options, FilePath):

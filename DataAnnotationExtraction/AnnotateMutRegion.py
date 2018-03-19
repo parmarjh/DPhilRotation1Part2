@@ -73,7 +73,7 @@ def AddRSids():
     pass
 
 def AnnotateRegions():
-    # TODO this is where I annotate with the ENEMBL transcript inormation
+    # TODO this is where I annotate with the ENSEMBL transcript inormation
     pass
 
 def ProcessFiles(Options, FilePath, allOutDir):
