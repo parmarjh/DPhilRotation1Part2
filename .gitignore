@@ -159,6 +159,8 @@ fabric.properties
 /PCAWGData/Cancers/*
 /PCAWGData/MutationCounts.txt
 /PCAWGData/CNV/*
+/PCAWGData/SampleProcessStatus.xlsx
+/PCAWGData/~$SampleProcessStatus.xlsx
 
 .idea/
 

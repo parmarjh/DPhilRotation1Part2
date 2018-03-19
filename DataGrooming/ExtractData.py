@@ -181,8 +181,6 @@ def PrepareCancerClasses(Options, FilePath):
     allData = {}
     count = 0
 
-    # TODO Implement repair function!!!!!! with a passover to re-do vcf files that weren't created!!!!!!!!
-
     if Options.oneCancer:
         if Options.cancerName not in cancerTypes:
             sys.exit("ERROR: Unrecognized cancer_name argument provided.")

@@ -4,15 +4,12 @@ Created by Ryan Schenck
 '''
 import sys
 import os
-import gzip
-import io
+import glob
 from optparse import OptionParser
 import datetime
 import time
 import subprocess
 from functools import wraps
-import pandas as pd
-
 
 def OptionParsing():
     usage = 'usage: %prog [options] -f <*.h5>'
@@ -68,21 +65,41 @@ def UpdateProgressGetN(fileName):
         pipe = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout
     return(int(pipe.read().decode("utf-8").lstrip(" ").split(" ")[0]))
 
-def AddRSids():
-    # TODO Will add this at a later point. Not needed right now.
-    pass
+class CancerData:
+    def __init__(self, FilePath, Options, CancerType, vcfFilePath):
+        self.FilePath = FilePath
+        self.cancer = CancerType
+        self.vcfParentDir = vcfFilePath
+        self.vcfFiles = glob.glob(self.vcfParentDir + "*.sorted.vcf.gz")
+        self.AnnotateRegions()
 
-def AnnotateRegions():
-    # TODO this is where I annotate with the ENSEMBL transcript inormation
-    pass
+    def AddRSids(self):
+        # TODO Will add this at a later point. Not needed right now.
+        pass
 
+    def AnnotateRegions(self):
+        # TODO this is where I annotate with the ENSEMBL transcript inormation
+        pass
+
+@fn_timer
 def ProcessFiles(Options, FilePath, allOutDir):
-    print("INFO: Repairing file structure and improperly formed vcf files.")
-    with open(FilePath.rstrip("DataGrooming") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
+    print("INFO: Begging the process...")
+    with open(FilePath.rstrip("DataAnnotationExtraction") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
         cancerTypes = [line.rstrip('\n') for line in inFile.readlines()]
 
-
     allData = {}
+    if Options.oneCancer:
+        if Options.cancerName not in cancerTypes:
+            sys.exit("ERROR: Unrecognized cancer_name argument provided.")
+        print("INFO: Processing %s" % (Options.cancerName))
+        pathToVCFs = "%sPCAWGData/Cancers/%s/" % (FilePath.rstrip("DataAnnotationExtraction"), Options.cancerName)
+        allData.update({Options.cancerName: CancerData(FilePath, Options, Options.cancerName, pathToVCFs)})
+    else:
+        for cancer in cancerTypes:
+            print("INFO: Processing %s"%(cancer))
+            pathToVCFs = "%sPCAWGData/Cancers/%s/"%(FilePath.rstrip("DataAnnotationExtraction"), cancer)
+            allData.update({cancer:CancerData(FilePath, Options, cancer, pathToVCFs)})
+
 
 def main():
     FilePath = os.path.dirname(os.path.abspath(__file__))
