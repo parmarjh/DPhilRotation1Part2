@@ -15,7 +15,7 @@ except:
     import configparser # for python 3
 
 def OptionParsing():
-    usage = 'usage: %prog [options] -f <*.h5>'
+    usage = 'usage: %prog [options]'
     parser = OptionParser(usage)
     parser.add_option('-r', '--ref_genome', dest="refGenome",
                       default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa",
@@ -108,7 +108,7 @@ class CancerData:
 
 @fn_timer
 def ProcessFiles(Options, FilePath, snpEFF):
-    print("INFO: Begging the process...")
+    print("INFO: Beginning the process...")
     with open(FilePath.rstrip("DataAnnotationExtraction") + "PCAWGData/CancerTypes.txt", 'r') as inFile:
         cancerTypes = [line.rstrip('\n') for line in inFile.readlines()]
 

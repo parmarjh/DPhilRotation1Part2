@@ -22,15 +22,30 @@ java -jar snpEff.jar download -v GRCh37.75
 ```bash
 python ./DataAnnotationExtraction/AnnotateMutRegion.py
 ```
-1. Annotates variants using snpEFF
+1. Annotates variants using snpEFF to allow for isoforms
 2. Appends up to date rs IDs across all sites (CURRENTLY DISABLED).
 # Part 2
 ```bash
-# Placeholder
+python ./DataAnnotationExtraction/DataExtractionForMutagenesis.py --help
+python ./DataAnnotationExtraction/DataExtractionForMutagenesis.py -l --cancer_name=MELA
 ```
-1. Extracts noncoding mutations to construct candidate sites and proper file for saturation mutagenesis.
-
-
+1. Extracts and formats noncoding mutations as annotated by snpEFF.
+   - Different isoforms are allowed. If any fall outside of a coding region they are considered.
+2. This script yields a pickle file containing the following:
+   - CancerData Class with the following attributes:
+     - Cancer type
+     - PatientData Class with the following attributes:
+       - vcf Files
+       - bed files (created within the class)
+       - vcf Mutations (not saved due to the requirement of large memory)
+         - If you want this, access it by running CancerData.vcfData.BuildMutsStruct()
+       - Matrices of mutations for all noncoding sites, priority targets (e.g. TF binding sites), and genomic position.
+3. Merge all mutation matrices across all cancer types.
+```bash
+python ./DataAnnotationExtraction/DataExtractionForMutagenesis.py --build_final
+```
+   - Note this can only be ran once all cancer types have been processed as outlined above.
+   - This will merge all matrices to be used for targeted saturation mutagenesis.
 
 # No Longer Doing this for now:
 ```bash
