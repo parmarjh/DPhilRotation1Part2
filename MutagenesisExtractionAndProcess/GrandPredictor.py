@@ -39,6 +39,8 @@ def OptionParsing():
     parser.add_option('-o', '--output', dest="output", default="/Users/schencro/Desktop/Oxford/Rotation_1/PCAWGArm/MutagenesisExtractionAndProcess/Predictions/WTPreds.txt", help="Output directory")
     parser.add_option('-i', '--input', dest='infasta', default='/Users/schencro/Desktop/Oxford/Rotation_1/PCAWGArm/MutagenesisExtractionAndProcess/WTseqs.fasta', help="Input fasta file")
     parser.add_option('-d', '--debug', dest='debug', default=False, action='store_true', help="Run to do small batch predictions.")
+    parser.add_option('-g', '--gpunum', dest='gpunumber', default=None, type=int, help="GPU number to run on (if applicable).")
+
     (options, args) = parser.parse_args()
     return (options, parser)
 
@@ -179,6 +181,9 @@ def main():
     localpath = os.path.abspath(__file__).rstrip('DataExtractionForMutagenesis.py')  # path to scripts working directory
 
     (Options, Parser) = OptionParsing()
+    if Options.gpunumber is not None:
+        os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(Options.gpunumber)
+
     os.system('touch %s' % (Options.output))
     model = LoadModel(Options)
 
