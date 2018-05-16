@@ -162,10 +162,12 @@ fabric.properties
 /PCAWGData/SampleProcessStatus.xlsx
 /PCAWGData/~$SampleProcessStatus.xlsx
 /MutagenesisExtractionAndProcess/vcfClasses.p
+/MutagenesisExtractionAndProcess/vcfClasses.p.gz
 /MutagenesisExtractionAndProcess/allSitesUnmerged.bed
 /MutagenesisExtractionAndProcess/allSites.merged.sorted.bed
 /MutagenesisExtractionAndProcess/SitesToBuildFasta.bed
 /MutagenesisExtractionAndProcess/WTseqs.fasta
+/MutagenesisExtractionAndProcess/MUTseqs.fasta
 
 .idea/
 
