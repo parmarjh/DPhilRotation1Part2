@@ -109,7 +109,6 @@ class FinalBeds:
 
     def __init__(self, vcfClass):
         self.vcfClasses = vcfClass
-        self.wildtypeFasta = None
 
     def SortAndMerge(self):
         if os.path.isfile('./allSites.merged.sorted.bed')==False:
@@ -126,7 +125,7 @@ class FinalBeds:
         Constructs a fasta of the proper window length for the model where the mutation falls within the middle of the sequence.
         :return: Sets self.wildtypeFasta as a fasta file list where i and i+1 are the fasta header and sequence, respectively.
         '''
-        if os.path.isfile('./SitesToGet.bed')==False:
+        if os.path.isfile('./SitesToBuildFasta.bed')==False:
             with open('./allSites.merged.sorted.bed','r') as inFile:
                 with open('./SitesToBuildFasta.bed','w') as outFile:
                     for pos in inFile:
@@ -140,14 +139,24 @@ class FinalBeds:
         else:
             pass
 
-        cmd = 'bedtools getfasta -fi %s -bed ./SitesToBuildFasta.bed -s'%(ref)
-        result = subprocess.check_output(cmd, shell=True)
-        result = result.decode('UTF-8').split('\n')
-
-        self.wildtypeFasta = result
+        if os.path.isfile('./WTseqs.fasta')==False:
+            cmd = 'bedtools getfasta -fi %s -bed ./SitesToBuildFasta.bed -s'%(ref)
+            result = subprocess.check_output(cmd, shell=True)
+            result = result.decode('UTF-8').split('\n')
+            with open('./WTseqs.fasta','w') as outFile:
+                for i in range(0,len(result)-1,2):
+                    outFile.write(result[i]+'\n'+result[i+1]+'\n')
+        else:
+            pass
 
     def BuildMUTFasta(self):
-        pass
+        '''
+        Constructs mutations based on the observed PCAWG Muts.
+
+        :return:
+        '''
+        with open('./WTseqs.fasta','r') as inFasta:
+            pass
 
     def __extend(self, start, end, ext):
         '''
