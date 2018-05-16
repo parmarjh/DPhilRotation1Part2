@@ -155,13 +155,13 @@ class FinalBeds:
 
         :return:
         '''
-        n = UpdateProgressGetN('./WTseqs.fasta')
+        # n = UpdateProgressGetN('./WTseqs.fasta')
         i=0
         seq = ''
         with open('./WTseqs.fasta','r') as inFasta:
             with open('./MUTseqs.fasta','w') as outFasta:
                 for line in inFasta:
-                    UpdateProgress(i, n, str(i) + "/" + str(n) + "Building MUT Fasta")
+                    # UpdateProgress(i, n, str(i) + "/" + str(n) + "Building MUT Fasta")
                     i += 1
                     if line[0] == '>':
                         if seq:
