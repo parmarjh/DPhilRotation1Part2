@@ -116,10 +116,15 @@ class FinalBed:
         self.vcfClasses = vcfClass
 
     def SortAndMerge(self):
-        with open('./allSites.bed','w') as outIt:
-            for vcf in self.vcfClasses:
-                for entry in self.vcfClasses[vcf].bedtojoin:
-                    outIt.write(entry + '\n')
+        if os.path.isfile()==False:
+            with open('./allSitesUnmerged.bed','w') as outIt:
+                for vcf in self.vcfClasses:
+                    for entry in self.vcfClasses[vcf].bedtojoin:
+                        outIt.write(entry + '\n')
+
+            os.system("awk '!seen[$0]++' ./allSitesUnmerged.bed | sort -k 1,1 -k2,2n > ./allSites.merged.sorted.bed")
+            os.remove('./allSitesUnmerged.bed')
+            # Git Test
 
 @fn_timer
 def GatherVCFData(Options, file_list):
@@ -149,8 +154,8 @@ def main():
     else:
         vcfClasses = pickle.load(open('./vcfClasses.p','rb'))
 
-    # print(vcfClasses)
-    # FinalBed(vcfClasses).SortAndMerge()
+    FinalBedClass = FinalBed(vcfClasses)
+    FinalBedClass.SortAndMerge()
 
 
 if __name__=='__main__':

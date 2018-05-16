@@ -162,6 +162,8 @@ fabric.properties
 /PCAWGData/SampleProcessStatus.xlsx
 /PCAWGData/~$SampleProcessStatus.xlsx
 /MutagenesisExtractionAndProcess/vcfClasses.p
+/MutagenesisExtractionAndProcess/allSitesUnmerged.bed
+/MutagenesisExtractionAndProcess/allSites.merged.sorted.bed
 
 .idea/
 
