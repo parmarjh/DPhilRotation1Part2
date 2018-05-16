@@ -140,7 +140,7 @@ class FinalBeds:
             pass
 
         if os.path.isfile('./WTseqs.fasta')==False:
-            cmd = 'bedtools getfasta -fi %s -bed ./SitesToBuildFasta.bed -s'%(ref)
+            cmd = 'bedtools getfasta -fi %s -bed ./SitesToBuildFasta.bed -s -fo /dev/stdout'%(ref)
             result = subprocess.check_output(cmd, shell=True)
             result = result.decode('UTF-8').split('\n')
             with open('./WTseqs.fasta','w') as outFile:
