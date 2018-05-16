@@ -161,6 +161,7 @@ fabric.properties
 /PCAWGData/CNV/*
 /PCAWGData/SampleProcessStatus.xlsx
 /PCAWGData/~$SampleProcessStatus.xlsx
+/MutagenesisExtractionAndProcess/vcfClasses.p
 
 .idea/
 
