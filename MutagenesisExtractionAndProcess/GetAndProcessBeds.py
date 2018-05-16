@@ -155,8 +155,36 @@ class FinalBeds:
 
         :return:
         '''
+        n = UpdateProgressGetN('./WTseqs.fasta')
+        i=0
+        seq = ''
         with open('./WTseqs.fasta','r') as inFasta:
-            pass
+            with open('./MUTseqs.fasta','w') as outFasta:
+                for line in inFasta:
+                    UpdateProgress(i, n, str(i) + "/" + str(n) + "Building MUT Fasta")
+                    i += 1
+                    if line[0] == '>':
+                        if seq:
+                            snv = header.split('(')[1].replace(')','')
+                            ref = snv.split('/')[0]
+                            alt = snv.split('/')[1]
+                            if ref==seq[300]:
+                                mutableSeq = [base for base in seq]
+                                mutableSeq[300]=alt
+                                seqout=''.join(mutableSeq)
+                                assert seqout[300]==alt, "Mutation did not take place."
+                                assert seq!=seqout, "Sequences are identical, but should be different."
+                                assert len(seqout)==600, "Sequence is longer than expected."
+                                outFasta.write('>'+header.split('(')[0]+'('+ref+'/'+alt+'.Mut)'+'\n')
+                                outFasta.write(seqout+'\n')
+                            else:
+                                sys.exit("Error. Unable to determine appropriate snv.")
+                        header = line[1:].rstrip()
+                        seq = ''
+                    else:
+                        seq += line.rstrip()
+        print('')
+
 
     def __extend(self, start, end, ext):
         '''
@@ -197,12 +225,15 @@ def main():
     if os.path.isfile('./vcfClasses.p')==False:
         vcfClasses = GatherVCFData(Options, file_list)
         pickle.dump(vcfClasses,open('./vcfClasses.p','wb'))
-    else:
+    if os.path.isfile('./WTseqs.fasta')==False:
         vcfClasses = pickle.load(open('./vcfClasses.p','rb'))
+        FinalBedClass = FinalBeds(vcfClasses)
+        FinalBedClass.SortAndMerge()
+    else:
+        FinalBedClass = FinalBeds(None)
 
-    FinalBedClass = FinalBeds(vcfClasses)
-    FinalBedClass.SortAndMerge()
     FinalBedClass.BuildWTFasta(Options.ext, Options.refGenome)
+    FinalBedClass.BuildMUTFasta()
 
 
 if __name__=='__main__':

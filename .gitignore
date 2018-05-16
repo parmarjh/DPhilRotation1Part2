@@ -166,6 +166,7 @@ fabric.properties
 /MutagenesisExtractionAndProcess/allSites.merged.sorted.bed
 /MutagenesisExtractionAndProcess/SitesToBuildFasta.bed
 /MutagenesisExtractionAndProcess/WTseqs.fasta
+/MutagenesisExtractionAndProcess/MUTseqs.fasta
 
 .idea/
 
