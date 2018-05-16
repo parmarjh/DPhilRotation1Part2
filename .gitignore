@@ -164,6 +164,7 @@ fabric.properties
 /MutagenesisExtractionAndProcess/vcfClasses.p
 /MutagenesisExtractionAndProcess/allSitesUnmerged.bed
 /MutagenesisExtractionAndProcess/allSites.merged.sorted.bed
+/MutagenesisExtractionAndProcess/SitesToBuildFasta.bed
 
 .idea/
 

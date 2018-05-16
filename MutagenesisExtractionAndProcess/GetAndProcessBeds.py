@@ -29,12 +29,7 @@ def OptionParsing():
                       default="/Users/schencro/Desktop/Bioinformatics_Tools/Ref_Genomes/Ensembl/GRCh37.75/GRCh37.75.fa",
                       help="Reference genome to be used.")
     parser.add_option('-i', '--input', dest="vcfs", help="Directory where the vcf files are stored. This will process all files in a directory.")
-    parser.add_option('-c', '--cancer_name', dest='cancerName', default=None,
-                      help="Cancer directory name to be processed. List of names can be found in CancerTypes.txt")
-    parser.add_option('-f', '--build_final', dest='buildFinal', default=False, action='store_true', help="Instructions to build the final matrix for extracting sequences for CNN predictions.")
-    parser.add_option('-u', '--unit_test', dest='unitTest', default=False, action='store_true', help='Use with --build_final for development on only a subset of the cancer groups.')
-    parser.add_option('-s', '--no_stats', dest="noStats", default=True, action="store_false", help="Flag to disable statistics")
-    parser.add_option('-z', '--clean', dest="clean", default=False, action="store_true")
+    parser.add_option('-e', '--extension', dest='ext', default=600, help="Size of the sequence for the model. Default=600.")
     (options, args) = parser.parse_args()
     return (options, parser)
 
@@ -110,13 +105,14 @@ class VCFFile:
 
                 self.bedtojoin.append('\t'.join([v[0],v[1],v[2],v[3],v[4],varclass]))
 
-class FinalBed:
+class FinalBeds:
 
     def __init__(self, vcfClass):
         self.vcfClasses = vcfClass
+        self.wildtypeFasta = None
 
     def SortAndMerge(self):
-        if os.path.isfile()==False:
+        if os.path.isfile('./allSites.merged.sorted.bed')==False:
             with open('./allSitesUnmerged.bed','w') as outIt:
                 for vcf in self.vcfClasses:
                     for entry in self.vcfClasses[vcf].bedtojoin:
@@ -124,8 +120,48 @@ class FinalBed:
 
             os.system("awk '!seen[$0]++' ./allSitesUnmerged.bed | sort -k 1,1 -k2,2n > ./allSites.merged.sorted.bed")
             os.remove('./allSitesUnmerged.bed')
-            # Git Test
 
+    def BuildWTFasta(self, ext, ref):
+        '''
+        Constructs a fasta of the proper window length for the model where the mutation falls within the middle of the sequence.
+        :return: Sets self.wildtypeFasta as a fasta file list where i and i+1 are the fasta header and sequence, respectively.
+        '''
+        if os.path.isfile('./SitesToGet.bed')==False:
+            with open('./allSites.merged.sorted.bed','r') as inFile:
+                with open('./SitesToBuildFasta.bed','w') as outFile:
+                    for pos in inFile:
+                        p = pos.split('\t')
+                        start = int(p[1])
+                        end = int(p[2])
+                        chrom = p[0]
+                        start, end = self.__extend(start, end, ext)
+                        outBedLine = '\t'.join([chrom,str(start),str(end),p[3],p[4],p[3]])
+                        outFile.write(outBedLine + '\n')
+        else:
+            pass
+
+        cmd = 'bedtools getfasta -fi %s -bed ./SitesToBuildFasta.bed -s'%(ref)
+        result = subprocess.check_output(cmd, shell=True)
+        result = result.decode('UTF-8').split('\n')
+
+        self.wildtypeFasta = result
+
+    def BuildMUTFasta(self):
+        pass
+
+    def __extend(self, start, end, ext):
+        '''
+        Extends a sequence
+        :param start: Start from Bed
+        :param end: End from Bed
+        :param ext: Length of extension
+        :return: A start, an end, and the location of the mutation.
+        '''
+        bedstart = int(max(0, start - ext / 2))
+        end = int(bedstart + ext)
+        mut=start
+        assert (bedstart-end)==-(ext), "Length of sequence was unexpected."
+        return(bedstart, end)
 
 @fn_timer
 def GatherVCFData(Options, file_list):
@@ -155,8 +191,9 @@ def main():
     else:
         vcfClasses = pickle.load(open('./vcfClasses.p','rb'))
 
-    FinalBedClass = FinalBed(vcfClasses)
+    FinalBedClass = FinalBeds(vcfClasses)
     FinalBedClass.SortAndMerge()
+    FinalBedClass.BuildWTFasta(Options.ext, Options.refGenome)
 
 
 if __name__=='__main__':
