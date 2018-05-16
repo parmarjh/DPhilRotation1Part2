@@ -179,9 +179,10 @@ class FinalBeds:
                                 outFasta.write('>'+header.split('(')[0]+'('+ref+'/'+alt+'.Mut)'+'\n')
                                 outFasta.write(seqout+'\n')
                             else:
+                                outFasta.write('>' + header.split('(')[0] + '(' + ref + '/' + alt + '.Fucked)' + '\n')
+                                outFasta.write(seq + '\n')
+                                # Spitting out headers that are fucking stupid because they are too close to the end of the chrom...
                                 print(header)
-                                print(seq)
-                                sys.exit("Error. Unable to determine appropriate snv.")
                         header = line[1:].rstrip()
                         seq = ''
                     else:
