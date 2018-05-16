@@ -149,6 +149,7 @@ class FinalBeds:
         else:
             pass
 
+    @fn_timer
     def BuildMUTFasta(self):
         '''
         Constructs mutations based on the observed PCAWG Muts.
@@ -183,8 +184,6 @@ class FinalBeds:
                         seq = ''
                     else:
                         seq += line.rstrip()
-        print('')
-
 
     def __extend(self, start, end, ext):
         '''
