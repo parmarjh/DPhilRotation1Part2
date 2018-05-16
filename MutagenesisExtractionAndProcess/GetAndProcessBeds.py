@@ -163,9 +163,9 @@ class FinalBeds:
             with open('./MUTseqs.fasta','w') as outFasta:
                 for line in inFasta:
                     # UpdateProgress(i, n, str(i) + "/" + str(n) + "Building MUT Fasta")
+                    i += 1
                     if line[0] == '>':
                         if seq:
-                            i += 1
                             snv = header.split('(')[1].replace(')','')
                             ref = snv.split('/')[0]
                             alt = snv.split('/')[1]
