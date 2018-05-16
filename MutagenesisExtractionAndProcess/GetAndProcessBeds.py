@@ -110,13 +110,25 @@ class VCFFile:
 
                 self.bedtojoin.append('\t'.join([v[0],v[1],v[2],v[3],v[4],varclass]))
 
+class FinalBed:
+
+    def __init__(self, vcfClass):
+        self.vcfClasses = vcfClass
+
+    def SortAndMerge(self):
+        with open('./allSites.bed','w') as outIt:
+            for vcf in self.vcfClasses:
+                for entry in self.vcfClasses[vcf].bedtojoin:
+                    outIt.write(entry + '\n')
+
 @fn_timer
 def GatherVCFData(Options, file_list):
     n = len(file_list)
     i=1
     files = dict.fromkeys(file_list)
     for vcf in files:
-        files[vcf] = VCFFile(Options, vcf).GetBedFile()
+        files[vcf]=VCFFile(Options, vcf)
+        files[vcf].GetBedFile()
         UpdateProgress(i,n,"Reading vcf files.")
         i+=1
     return(files)
@@ -136,6 +148,9 @@ def main():
         pickle.dump(vcfClasses,open('./vcfClasses.p','wb'))
     else:
         vcfClasses = pickle.load(open('./vcfClasses.p','rb'))
+
+    # print(vcfClasses)
+    # FinalBed(vcfClasses).SortAndMerge()
 
 
 if __name__=='__main__':
