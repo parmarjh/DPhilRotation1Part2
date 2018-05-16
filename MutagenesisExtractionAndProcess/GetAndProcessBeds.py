@@ -116,7 +116,7 @@ class FinalBed:
         self.vcfClasses = vcfClass
 
     def SortAndMerge(self):
-        with open('./allSites.bed','w') as outIt:
+        with open('./allSitesUnmerged.bed','w') as outIt:
             for vcf in self.vcfClasses:
                 for entry in self.vcfClasses[vcf].bedtojoin:
                     outIt.write(entry + '\n')
