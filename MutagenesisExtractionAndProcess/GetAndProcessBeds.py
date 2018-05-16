@@ -116,7 +116,6 @@ class FinalBed:
         self.vcfClasses = vcfClass
 
     def SortAndMerge(self):
-<<<<<<< HEAD
         if os.path.isfile()==False:
             with open('./allSitesUnmerged.bed','w') as outIt:
                 for vcf in self.vcfClasses:
@@ -126,12 +125,7 @@ class FinalBed:
             os.system("awk '!seen[$0]++' ./allSitesUnmerged.bed | sort -k 1,1 -k2,2n > ./allSites.merged.sorted.bed")
             os.remove('./allSitesUnmerged.bed')
             # Git Test
-=======
-        with open('./allSitesUnmerged.bed','w') as outIt:
-            for vcf in self.vcfClasses:
-                for entry in self.vcfClasses[vcf].bedtojoin:
-                    outIt.write(entry + '\n')
->>>>>>> 19c7f8142608513407951118468d525efe5d7bc9
+
 
 @fn_timer
 def GatherVCFData(Options, file_list):
