@@ -124,6 +124,7 @@ def dna_one_hot(seq, seq_len=None, flatten=True):
 
     return seq_vec
 
+@fn_timer
 def RunPredictions(seq_vecs, model, Options):
     # Step 1 separate headers and chunks
     seqs = []
@@ -136,12 +137,12 @@ def RunPredictions(seq_vecs, model, Options):
     seqsReady = seqStack.reshape(seqStack.shape[0], 600, 4)
 
     preds = model.predict(seqsReady)
+    # print(preds.shape)
     #
-    # # outLine = (heads[0] + '\t' + '\t'.join([repr(i) for i in preds.tolist()[0]]) +'\n')
+    # outLine = (heads[0] + '\t' + '\t'.join([repr(i) for i in preds.tolist()[0]]) +'\n')
     outLine = heads[0] + '\t' + repr(np.mean(preds)) + '\t' + repr(np.std(preds)) + '\n'
     with open(Options.output, 'a') as outFile:
         outFile.write(outLine)
-
 
 @fn_timer
 def ProcessFasta(Options, model):
@@ -154,15 +155,13 @@ def ProcessFasta(Options, model):
         for line in inFile:
             if line[0] == '>':
                 if seq:
-                    i += 1
                     # Main code chunck
                     ###
                     if len(seq_vecs)==chunkSize-1:
+                        i += 1
                         seq_vecs[header] = dna_one_hot(seq, 600) # Not flattened
                         # do something
                         RunPredictions(seq_vecs, model, Options)
-                        # if i==1:
-                        #     break
                         # TODO Make predictions once there are 250000 seqs put together
                         ##
                         seq_vecs=OrderedDict()
@@ -187,8 +186,8 @@ def main():
     os.system('touch %s' % (Options.output))
     model = LoadModel(Options)
 
-    # model.summary()
-    ProcessFasta(Options, model)
+    model.summary()
+    # ProcessFasta(Options, model)
 
 if __name__=='__main__':
     main()

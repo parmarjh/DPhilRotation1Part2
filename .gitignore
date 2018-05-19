@@ -168,7 +168,9 @@ fabric.properties
 /MutagenesisExtractionAndProcess/SitesToBuildFasta.bed
 /MutagenesisExtractionAndProcess/WTseqs.fasta
 /MutagenesisExtractionAndProcess/MUTseqs.fasta
-/MutagenesisExtractionAndProcess/*.txt
+/MutagenesisExtractionAndProcess/Predictions/WTPreds.txt
+/MutagenesisExtractionAndProcess/Predictions/MUTPreds.txt
+/MutagenesisExtractionAndProcess/Predictions/*.txt
 
 .idea/
 
