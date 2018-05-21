@@ -171,6 +171,10 @@ fabric.properties
 /MutagenesisExtractionAndProcess/Predictions/WTPreds.txt
 /MutagenesisExtractionAndProcess/Predictions/MUTPreds.txt
 /MutagenesisExtractionAndProcess/Predictions/*.txt
+/MutagenesisExtractionAndProcess/Predictions/*.rds
+/MutagenesisExtractionAndProcess/Predictions/DiffsHighLow
+/MutagenesisExtractionAndProcess/Predictions/COAD.matches.txt
+/MutagenesisExtractionAndProcess/Predictions/*.Rhistory
 
 .idea/
 
