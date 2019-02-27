@@ -9,6 +9,16 @@ Convert MAF files to VCF files and append CNV information (if needed).
 2. samtools (==1.4.1)
 3. Ensembl GRCh37.75 Reference Build as a single *.fa (indexed)
 
+```bash
+# Add the following to ~/.bash_profile
+# Added from Rotation 1 project bedtools
+export PATH="/gpfs0/apps/well/bedtools/2.24.0-18-gb0bc5b7/bin:$PATH"
+# Added from Rotation 1 project samtools
+export PATH="/gpfs0/apps/well/samtools/1.4.1/bin:$PATH"
+# Added from Rotation 1 project vcftools
+export PATH="/gpfs0/apps/well/vcftools/0.1.14-gcc4.7.2/bin:$PATH"
+```
+
 ## Preparing PCAWG Data for Analysis
 ```bash
 cd ./PCAWGData # Not on github with data
